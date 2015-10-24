@@ -16,6 +16,15 @@ class OAuth2
     private $app_secret;
     private $user_agent;
 
+    /**
+     * Instantiate global variables and request access token.
+     *
+     * @param $username
+     * @param $password
+     * @param $app_id
+     * @param $app_secret
+     * @param $user_agent
+     */
     public function __construct($username, $password, $app_id, $app_secret, $user_agent)
     {
         $this->username = $username;
@@ -27,6 +36,11 @@ class OAuth2
         $this->requestAccessToken();
     }
 
+    /**
+     * Accessor method for getting access token.
+     *
+     * @return array
+     */
     public function getAccessToken()
     {
         if (!(isset($this->access_token) && isset($this->token_type) && time() < $this->expiration)) {
@@ -39,6 +53,9 @@ class OAuth2
         );
     }
 
+    /**
+     * Request an access token from /api/v1/access_token.
+     */
     private function requestAccessToken()
     {
         $url = "https://www.reddit.com/api/v1/access_token";
