@@ -10,17 +10,21 @@ require_once('live.php');
 
 class phpRAW
 {
-    /** @var OAuth2 */
     private $oauth2;
-
-    /** @var RateLimiter */
     public $ratelimiter;
-
     private $user_agent;
     private $endpoint;
-
     private $debug;
 
+    /**
+     * @param string $auth_type
+     * @param string $username
+     * @param string $password
+     * @param string $app_id
+     * @param string $app_secret
+     * @param string $user_agent
+     * @param string $endpoint
+     */
     public function __construct($auth_type = 'oauth', $username = REDDIT_USERNAME, $password = REDDIT_PASSWORD, $app_id = REDDIT_APP_ID, $app_secret = REDDIT_APP_SECRET, $user_agent = PHPRAW_USER_AGENT, $endpoint = PHPRAW_OAUTH_ENDPOINT)
     {
         if ($auth_type == 'oauth') {
@@ -35,16 +39,30 @@ class phpRAW
         $this->debug = false;
     }
 
+    /**
+     * Enable or disable debug mode.
+     *
+     * @param $debug
+     */
     public function setDebug($debug)
     {
         $this->debug = $debug;
     }
 
-    //-----------------------------------------
-    // Account
-    //-----------------------------------------
+
+    /*
+    |--------------------------------------------------------------------------
+    | Account
+    |--------------------------------------------------------------------------
+    |
+    | Here is where you can access to all of the API endpoints relating to a
+    | user account.
+    | TODO: Confirm missing endpoints.
+    |
+    */
     /**
      * Gets information about the current user's account.
+     *
      * @return mixed|null An object representing the current user. Null if failed.
      */
     public function getMe()
@@ -61,6 +79,7 @@ class phpRAW
 
     /**
      * Gets karma breakdown of current user.
+     *
      * @return array|null Array of objects representing subreddits and corresponding karma values. Null if failed.
      */
     public function getMyKarmaBreakdown()
@@ -76,6 +95,7 @@ class phpRAW
 
     /**
      * Gets current user's site preferences.
+     *
      * @return mixed|null Object representing user's preferences. Null if failed.
      */
     public function getMyPrefs()
@@ -91,6 +111,7 @@ class phpRAW
 
     /**
      * Gets current user's trophies.
+     *
      * @return array|null Array containing user's trophy objects. Null if failed.
      */
     public function getMyTrophies()
@@ -106,6 +127,7 @@ class phpRAW
 
     /**
      * Gets a list of the current user's friends.
+     *
      * @return mixed|null Listing of current user's friend objects. Null if failed.
      */
     public function getMyFriends()
@@ -122,6 +144,7 @@ class phpRAW
 
     /**
      * Gets a list of the current user's blocked users.
+     *
      * @return mixed|null Listing of current user's blocked users. Null if failed.
      */
     public function getBlockedUsers()
@@ -135,11 +158,19 @@ class phpRAW
         return $response;
     }
 
-    //-----------------------------------------
-    // Flair
-    //-----------------------------------------
+    /*
+    |--------------------------------------------------------------------------
+    | Flair
+    |--------------------------------------------------------------------------
+    |
+    | Here is where you can access to all of the API endpoints relating to
+    | flairs.
+    | TODO: Confirm missing endpoints.
+    |
+    */
     /**
      * Retrieves a list of all assigned user flair in the specified subreddit.
+     *
      * @param string $subreddit Name of subreddit from which to retrieve flair list.
      * @param int $limit Upper limit of number of items to retrieve. Upper limit is 1000.
      * @param null $after Use 'next' attribute of previous call to retrieve next page.
@@ -166,6 +197,7 @@ class phpRAW
 
     /**
      * Adds or modifies a flair template in a subreddit.
+     *
      * @param string $subreddit Name of subreddit to add flair template.
      * @param string $type Specifies user or link flair template. One of 'link' or 'user'.
      * @param null $text Flair text.
@@ -174,6 +206,7 @@ class phpRAW
      * @param null $template_id The template ID of an existing flair to modify. If null, will add a new one.
      * @return mixed|null Returns response to API call on success. Null if failed.
      */
+
     public function addFlairTemplate($subreddit, $type, $text = null, $css_class = null, $editable = false, $template_id = null)
     {
         $params = array(
@@ -196,6 +229,7 @@ class phpRAW
 
     /**
      * Deletes all flair templates of the selected type from the selected subreddit.
+     *
      * @param string $subreddit Subreddit of flairs to clear.
      * @param string $type One of 'user' or 'link'.
      * @return mixed|null Returns result of API call on success. Null if failed or incorrect type.
@@ -222,6 +256,7 @@ class phpRAW
 
     /**
      * Deletes the selected flair template from the specified subreddit.
+     *
      * @param string $subreddit Subreddit from which to delete flair template.
      * @param string $template_id ID of template to delete.
      * @return mixed|null Returns result of API call on success. Null if failed.
@@ -244,6 +279,7 @@ class phpRAW
 
     /**
      * Deletes a user's flair from the specified subreddit.
+     *
      * @param string $subreddit Subreddit in which to delete user flair.
      * @param string $user Username of user whose flair to delete.
      * @return mixed|null Returns result of API call on success. Null if failed.
@@ -266,7 +302,7 @@ class phpRAW
 
     /**
      * Gets current flair and a list of possible flairs for the specified user in the specified subreddit.
-     * Also useful for obtaining flair ID's.
+     *
      * @param string $subreddit Subreddit in which to view flair options.
      * @param string|null $user Username for whom to view selection. Defaults to current user.
      * @return mixed Returns API response.
@@ -284,6 +320,7 @@ class phpRAW
 
     /**
      * Gets current flair and a list of possible flairs for the specified link.
+     *
      * @param string $thing_id Thing ID of object to view flairs.
      * @return mixed|null Returns API response on success. Null if failed.
      */
@@ -304,6 +341,7 @@ class phpRAW
 
     /**
      * Selects a user flair to use from the flair selection list.
+     *
      * @param string $subreddit Subreddit in which to select flair.
      * @param string $user Username of user to whom to apply flair. Mandatory, don't ask me why.
      * @param string|null $template_id Template ID of template to select. Null will remove the user's flair.
@@ -330,6 +368,7 @@ class phpRAW
 
     /**
      * Applies a link flair template from the selection list to a link.
+     *
      * @param string $thing_id Thing ID of link to apply flair.
      * @param string|null $template_id Template ID of template to apply to link. Null will remove the link's flair.
      * @param string|null $text Modified flair text, if allowed.
@@ -355,6 +394,7 @@ class phpRAW
 
     /**
      * Assigns the selected user custom flair text and CSS class in the specified subreddit. Mods only.
+     *
      * @param string $subreddit Subreddit in which to assign flair.
      * @param string $user Username of user to assign flair.
      * @param string|null $text Custom flair text.
@@ -381,6 +421,7 @@ class phpRAW
 
     /**
      * Assigns the selected link custom flair text and CSS class in the specified subreddit. Mods only.
+     *
      * @param string $subreddit Subreddit in which to assign flair. Mandatory, don't ask me why.
      * @param string $thing_id Thing ID of link to assign flair.
      * @param string|null $text Custom flair text.
@@ -407,6 +448,7 @@ class phpRAW
 
     /**
      * Selects whether or not to show the current user's flair in the selected subreddit.
+     *
      * @param string $subreddit Subreddit in which to enable or disable flair.
      * @param bool|true $show True to show flair. False to hide flair.
      * @return mixed|null Returns API response on success. Null if failed.
@@ -429,6 +471,7 @@ class phpRAW
 
     /**
      * Updates all options in a subreddit's flair configuration.
+     *
      * @param string $subreddit Subreddit in which to configure flair.
      * @param boolean $user_enabled Whether or not user flair is displayed.
      * @param string $user_position On which side to display user flair. One of 'left' or 'right'.
@@ -467,15 +510,30 @@ class phpRAW
     }
 
 
-    //-----------------------------------------
-    // reddit gold
-    //-----------------------------------------
+    /*
+    |--------------------------------------------------------------------------
+    | reddit Gold
+    |--------------------------------------------------------------------------
+    |
+    | Here is where you can access to all of the API endpoints relating to
+    | reddit Gold.
+    | TODO: Add endpoints.
+    |
+    */
 
-    //-----------------------------------------
-    // Links & comments
-    //-----------------------------------------
+    /*
+    |--------------------------------------------------------------------------
+    | Links and Comments
+    |--------------------------------------------------------------------------
+    |
+    | Here is where you can access to all of the API endpoints relating to
+    | links and comments.
+    | TODO: Check missing endpoints.
+    |
+    */
     /**
      * Submits a new link post.
+     *
      * @param string $subreddit Subreddit in which to post link.
      * @param string $title Title of post.
      * @param string $url Link to post.
@@ -506,6 +564,7 @@ class phpRAW
 
     /**
      * Submits a new text post.
+     *
      * @param string $subreddit Subreddit in which to post.
      * @param string $title Title of post.
      * @param string|null $text Text of post.
@@ -536,6 +595,7 @@ class phpRAW
 
     /**
      * Comments on an object.
+     *
      * @param string $parent Thing ID of parent object on which to comment. Could be link, text post, or comment.
      * @param string $text Comment text.
      * @param bool|false $distinguish Whether or not it should be mod distinguished (for modded subreddits only).
@@ -565,6 +625,7 @@ class phpRAW
 
     /**
      * Deletes a post or comment.
+     *
      * @param string $thing_id Thing ID of object to delete. Could be link, text post, or comment.
      */
     public function delete($thing_id)
@@ -579,6 +640,7 @@ class phpRAW
 
     /**
      * Edits the text of a comment or text post.
+     *
      * @param string $thing_id Thing ID of text object to edit. Could be text post or comment.
      * @param string $text New text to replace the old.
      * @return mixed|null Object of thing that was just edited. Null if failed (such as editing a link post).
@@ -602,6 +664,7 @@ class phpRAW
 
     /**
      * Hides a post from user's listings.
+     *
      * @param string|array $thing_ids String or array of thing ID's of links to hide.
      * @return bool|null Returns true if success. Null if failed.
      */
@@ -626,6 +689,7 @@ class phpRAW
 
     /**
      * Unhides a post from user's hidden posts.
+     *
      * @param string|array $thing_ids String or array of thing ID's of links to unhide.
      * @return bool|null Returns true if success. Null if failed.
      */
@@ -650,6 +714,7 @@ class phpRAW
 
     /**
      * Gives a listing of information on objects.
+     *
      * @param string|array $thing_ids String or array of single or multiple thing ID's.
      * @return mixed Listing object if success. Null if failed.
      */
@@ -674,6 +739,7 @@ class phpRAW
 
     /**
      * Marks a post as NSFW.
+     *
      * @param string $thing_id Thing ID of post to mark as NSFW.
      * @return bool|null Returns true of success. Null if failed.
      */
@@ -694,6 +760,7 @@ class phpRAW
 
     /**
      * Unmarks a post as NSFW.
+     *
      * @param string $thing_id Thing ID of post to unmark as NSFW.
      * @return bool|null Returns true of success. Null if failed.
      */
@@ -719,6 +786,7 @@ class phpRAW
 
     /**
      * Reports a post, comment, or message.
+     *
      * @param string $thing_id Thing ID of object to report.
      * @param null $reason The reason for the report. Must be <100 characters.
      * @return mixed Array of errors. Length of 0 if successful.
@@ -738,6 +806,7 @@ class phpRAW
 
     /**
      * Saves a post or comment in the selected category.
+     *
      * @param string $thing_id Thing ID of object to save. Can be post or comment.
      * @param null $category Category in which to save object. Defaults to none.
      */
@@ -753,6 +822,7 @@ class phpRAW
 
     /**
      * Unsaves a post or comment from the current user's saved posts.
+     *
      * @param string $thing_id Thing ID of object to unsave. Can be post or comment.
      */
     public function unsave($thing_id)
@@ -777,6 +847,7 @@ class phpRAW
 
     /**
      * Toggles whether or not the current user should receive replies to a specific post or comment to their inbox.
+     *
      * @param string $thing_id Thing ID of object to toggle.
      * @param bool|true $state State of inbox replies. True to receive, false for not.
      */
@@ -792,6 +863,7 @@ class phpRAW
 
     /**
      * Store that the current user has visited a certain link.
+     *
      * @param string|array $thing_ids String or array of thing ID's of links to store as visited.
      */
     public function storeVisits($thing_ids)
@@ -810,8 +882,8 @@ class phpRAW
     /**
      * VOTES MUST BE CAST BY A HUMAN!!
      * Proxying a person's single vote is okay, but bots should not use vote functions on their own.
-     *
      * Upvotes a post or comment.
+     *
      * @param string $thing_id Thing ID of object to upvote.
      */
     public function upvote($thing_id)
@@ -826,6 +898,7 @@ class phpRAW
 
     /**
      * Downvotes a post or comment.
+     *
      * @param string $thing_id Thing ID of object to downvote.
      */
     public function downvote($thing_id)
@@ -840,6 +913,7 @@ class phpRAW
 
     /**
      * Resets the current user's vote on a post or comment.
+     *
      * @param string $thing_id Thing ID of object to reset vote.
      */
     public function unvote($thing_id)
@@ -852,11 +926,19 @@ class phpRAW
         $this->apiCall("/api/vote", 'POST', $params);
     }
 
-    //-----------------------------------------
-    // Listings
-    //-----------------------------------------
+    /*
+    |--------------------------------------------------------------------------
+    | Listings
+    |--------------------------------------------------------------------------
+    |
+    | Here is where you can access to all of the API endpoints relating to
+    | listings.
+    | TODO: Check missing endpoints.
+    |
+    */
     /**
      * Private function to unify process of retrieving several subreddit listings.
+     *
      * @param string $listing Listing type. Can be hot, new, controversial, top, gilded, ads.
      * @param string $subreddit
      * @param string $limit
@@ -887,6 +969,7 @@ class phpRAW
 
     /**
      * Retrieves the hot listing for the optionally specified subreddit.
+     *
      * @param string|null $subreddit Subreddit of listing to retrieve. If none, defaults to front page.
      * @param string|int $limit Upper limit of number of items to retrieve. Maxiumum is 100.
      * @param string|null $after Get items lower on list than this entry. Does not mean chronologically.
@@ -900,6 +983,7 @@ class phpRAW
 
     /**
      * Retrieves the new listing for the optionally specified subreddit.
+     *
      * @param string|null $subreddit Subreddit of listing to retrieve. If none, defaults to front page.
      * @param string|int $limit Upper limit of number of items to retrieve. Maxiumum is 100.
      * @param string|null $after Get items lower on list than this entry. Does not mean chronologically.
@@ -913,6 +997,7 @@ class phpRAW
 
     /**
      * Retrieves the controversial listing for the optionally specified subreddit.
+     *
      * @param string|null $subreddit Subreddit of listing to retrieve. If none, defaults to front page.
      * @param string $time Time constraint for age of items on list. One of hour, day, week, month, year, all.
      * @param string|int $limit Upper limit of number of items to retrieve. Maximum is 100.
@@ -927,6 +1012,7 @@ class phpRAW
 
     /**
      * Retrieves the top listing for the optionally specified subreddit.
+     *
      * @param string|null $subreddit Subreddit of listing to retrieve. If none, defaults to front page.
      * @param string $time Time constraint for age of items on list. One of hour, day, week, month, year, all.
      * @param string|int $limit Upper limit of number of items to retrieve. Maximum is 100.
@@ -939,11 +1025,19 @@ class phpRAW
         return $this->getSubredditListing('top', $subreddit, $limit, $after, $before, $time);
     }
 
-    //-----------------------------------------
-    // Live threads
-    //-----------------------------------------
+    /*
+    |--------------------------------------------------------------------------
+    | Live Threads
+    |--------------------------------------------------------------------------
+    |
+    | Here is where you can access to all of the API endpoints relating to
+    | live threads.
+    | TODO: Check Missing endpoints.
+    |
+    */
     /**
      * Creates a new Live thread. To use an existing one, use attachLiveThread().
+     *
      * @param string $title The thread's title.
      * @param null $description The thread's description.
      * @param null $resources The thread's list of resources.
@@ -970,6 +1064,7 @@ class phpRAW
 
     /**
      * Uses an existing Live thread to create a Live object.
+     *
      * @param string $thread_id Thread ID of the thread to attach.
      * @return Live Returns the resulting Live object.
      */
@@ -978,11 +1073,19 @@ class phpRAW
         return new Live($this, $thread_id);
     }
 
-    //-----------------------------------------
-    // Private messages
-    //-----------------------------------------
+    /*
+    |--------------------------------------------------------------------------
+    | Private Messages
+    |--------------------------------------------------------------------------
+    |
+    | Here is where you can access to all of the API endpoints relating to
+    | private messages.
+    | TODO: Check Missing endpoints.
+    |
+    */
     /**
      * Retrieves modmail messages.
+     *
      * @param string $subreddit Subreddit for which to retrieve modmail. 'mod' means all moderated subreddits.
      * @param int $limit Limit of the number of message threads to retrieve. Maximum of 100.
      * @param bool|false $messages_read Whether or not to turn off the orangered mail icon. Does not mark each message as read.
@@ -1011,6 +1114,7 @@ class phpRAW
 
     /**
      * Marks one or more messages as read.
+     *
      * @param string|array $thing_ids Either a comma-separated string of one or more thing ID's, or an array of the same.
      * @return mixed|null Returns empty object if success, null if failed.
      */
@@ -1035,6 +1139,7 @@ class phpRAW
 
     /**
      * Sends a message to a user or subreddit.
+     *
      * @param string $to Username or subreddit to send to.
      * @param string $subject Subject of message.
      * @param string $body Body of message.
@@ -1053,11 +1158,19 @@ class phpRAW
         $response = $this->apiCall("/api/compose", 'POST', $params);
     }
 
-    //-----------------------------------------
-    // Moderation
-    //-----------------------------------------
+    /*
+    |--------------------------------------------------------------------------
+    | Moderation
+    |--------------------------------------------------------------------------
+    |
+    | Here is where you can access to all of the API endpoints relating to
+    | live threads.
+    | TODO: Check Missing endpoints.
+    |
+    */
     /**
      * Toggles contest mode on a post.
+     *
      * @param string $thing_id Thing ID of post to toggle contest mode.
      * @param bool|false $state True to enable contest mode, false to disable.
      */
@@ -1074,6 +1187,7 @@ class phpRAW
 
     /**
      * Stickies a post at the top of the subreddit.
+     *
      * @param string $thing_id Thing ID of post to sticky.
      * @param int $num Position of new sticky. 1 for top, 2 for bottom. Defaults to 2.
      */
@@ -1091,6 +1205,7 @@ class phpRAW
 
     /**
      * Unsticky a post from the top of a subreddit.
+     *
      * @param string $thing_id Thing ID of post to unsticky.
      */
     public function unstickyPost($thing_id)
@@ -1107,6 +1222,7 @@ class phpRAW
 
     /**
      * Sets the default sort of a link's comments.
+     *
      * @param string $thing_id Thing ID of link to set suggested sort.
      * @param string $sort Sort method. One of: confidence, top, new, hot, controversial, old, random, qa, blank
      */
@@ -1123,6 +1239,7 @@ class phpRAW
 
     /**
      * Mod distinguish a post or comment.
+     *
      * @param string $thing_id Thing ID of object to distinguish.
      * @param bool|true $how True to set [M] distinguish. False to undistinguish.
      * @return mixed|null Returns details of object distinguished on success. Null if failed.
@@ -1146,6 +1263,7 @@ class phpRAW
 
     /**
      * Retrieves recent entries from the moderation log for the specified subreddit.
+     *
      * @param string $subreddit Subreddit of log to retrieve. All moderated subreddits by default.
      * @param int $limit Upper limit of number of items to retrieve. Maximum is 500.
      * @param null $after Obtain the page of the results that come after the specified ModAction.
@@ -1176,6 +1294,7 @@ class phpRAW
 
     /**
      * Retrieves a list of things that have been reported in the specified subreddit.
+     *
      * @param string $subreddit Subreddit of items to retrieve. All moderated subreddits by default.
      * @param int $limit Upper limit of number of items to retrieve. Maximum is 100.
      * @param null $after Obtain the page of the results that come after the specified thing.
@@ -1202,6 +1321,7 @@ class phpRAW
 
     /**
      * Retrieves a list of things that have been marked as spam in the specified subreddit.
+     *
      * @param string $subreddit Subreddit of items to retrieve. All moderated subreddits by default.
      * @param int $limit Upper limit of number of items to retrieve. Maximum is 100.
      * @param null $after Obtain the page of the results that come after the specified thing.
@@ -1228,6 +1348,7 @@ class phpRAW
 
     /**
      * Retrieves a list of things that have been placed in the modqueue of the specified subreddit.
+     *
      * @param string $subreddit Subreddit of items to retrieve. All moderated subreddits by default.
      * @param int $limit Upper limit of number of items to retrieve. Maximum is 100.
      * @param null $after Obtain the page of the results that come after the specified thing.
@@ -1254,6 +1375,7 @@ class phpRAW
 
     /**
      * Retrieves a list of things that have not been reviewed by a mod in the specified subreddit.
+     *
      * @param string $subreddit Subreddit of items to retrieve. All moderated subreddits by default.
      * @param int $limit Upper limit of number of items to retrieve. Maximum is 100.
      * @param null $after Obtain the page of the results that come after the specified thing.
@@ -1280,6 +1402,7 @@ class phpRAW
 
     /**
      * Retrieves a list of things that have been edited in the specified subreddit.
+     *
      * @param string $subreddit Subreddit of items to retrieve. All moderated subreddits by default.
      * @param int $limit Upper limit of number of items to retrieve. Maximum is 100.
      * @param null $after Obtain the page of the results that come after the specified thing.
@@ -1306,6 +1429,7 @@ class phpRAW
 
     /**
      * Accepts a moderator invitation for the specified subreddit. You must have a pending invitation for that subreddit.
+     *
      * @param string $subreddit Subreddit to accept invitation.
      * @return mixed|null Returns response error list. Empty list on success.
      */
@@ -1326,6 +1450,7 @@ class phpRAW
 
     /**
      * Marks the specified thing as approved.
+     *
      * @param string $thing_id Thing ID of object to be approved.
      */
     public function approve($thing_id)
@@ -1339,6 +1464,7 @@ class phpRAW
 
     /**
      * Removes a post or comment from a subreddit.
+     *
      * @param string $thing_id Thing ID of object to remove.
      * @param bool|false $spam Whether or not the object should be removed as spam.
      */
@@ -1354,6 +1480,7 @@ class phpRAW
 
     /**
      * Ignores reports for the specified thing.
+     *
      * @param string $thing_id Thing ID of object to be ignored.
      */
     public function ignoreReports($thing_id)
@@ -1367,6 +1494,7 @@ class phpRAW
 
     /**
      * Unignores reports for the specified thing.
+     *
      * @param string $thing_id Thing ID of object to be unignored.
      */
     public function unignoreReports($thing_id)
@@ -1380,6 +1508,7 @@ class phpRAW
 
     /**
      * Abdicate approved submitter status in a subreddit.
+     *
      * @param string $subreddit Name of subreddit to leave.
      * @return bool|null Returns true on success. Null if failed.
      */
@@ -1402,6 +1531,7 @@ class phpRAW
 
     /**
      * Abdicate moderator status in a subreddit.
+     *
      * @param string $subreddit Name of subreddit to leave.
      * @return bool|null Returns true on success. Null if failed.
      */
@@ -1424,6 +1554,7 @@ class phpRAW
 
     /**
      * Ban a user from the selected subreddit.
+     *
      * @param string $subreddit Subreddit from which to ban user.
      * @param string $user Username of user to ban.
      * @param string|null $note Ban note in banned users list. Not shown to user.
@@ -1453,6 +1584,7 @@ class phpRAW
 
     /**
      * Unban a user from a subreddit.
+     *
      * @param string $subreddit Subreddit from which to unban the user.
      * @param string $user Username of user to unban.
      * @return mixed|null Response of API call on success. Null if failed.
@@ -1475,6 +1607,7 @@ class phpRAW
 
     /**
      * Add a user as a contributor to a subreddit.
+     *
      * @param string $subreddit Subreddit to which to add user.
      * @param string $user Username of user to add.
      * @return mixed|null Response of API call on success. Null if failed.
@@ -1498,6 +1631,7 @@ class phpRAW
 
     /**
      * Remove a user as a contributor from a subreddit.
+     *
      * @param string $subreddit Subreddit from which to remove the user.
      * @param string $user Username of user to remove.
      * @return mixed|null Response of API call on success. Null if failed.
@@ -1520,6 +1654,7 @@ class phpRAW
 
     /**
      * Invite a user to become a moderator to a subreddit.
+     *
      * @param string $subreddit Subreddit to which to invite user.
      * @param string $user Username of user to invite.
      * @param bool|true $perm_all If the user should have full permissions.
@@ -1578,6 +1713,7 @@ class phpRAW
 
     /**
      * Remove an existing moderator as a moderator from a subreddit. To revoke an invitation, use uninviteModerator().
+     *
      * @param string $subreddit Subreddit from which to remove a user as a moderator.
      * @param string $user Username of user to remove
      * @return mixed|null Returns the response of the API call on success. Null if failed.
@@ -1600,6 +1736,7 @@ class phpRAW
 
     /**
      * Revoke a user's pending invitation to moderate a subreddit. To remove an existing moderator, use removeModerator().
+     *
      * @param string $subreddit Subreddit from which to revoke a user's invitation.
      * @param string $user User whose invitation to revoke.
      * @return mixed|null Returns the response of the API call on success. Null if failed.
@@ -1622,6 +1759,7 @@ class phpRAW
 
     /**
      * Modify an existing moderator's permission set. To modify an invited moderator's permissions, use setInvitationPermissions().
+     *
      * @param string $subreddit Subreddit in which to edit a user's permissions
      * @param string $user Username of user to edit permissions.
      * @param bool|true $perm_all If the user should have full permissions.
@@ -1680,6 +1818,7 @@ class phpRAW
 
     /**
      * Modify an invited moderator's permission set. To modify an existing moderator's permissions, use setModeratorPermissions().
+     *
      * @param string $subreddit Subreddit in which to edit a user's permissions
      * @param string $user Username of user to edit permissions.
      * @param bool|true $perm_all If the user should have full permissions.
@@ -1738,6 +1877,7 @@ class phpRAW
 
     /**
      * Ban a user from contributing to a subreddit's wiki.
+     *
      * @param string $subreddit Subreddit from which to ban user.
      * @param string $user Username of user to ban.
      * @param string|null $note Ban note in banned users list. Not shown to user.
@@ -1765,6 +1905,7 @@ class phpRAW
 
     /**
      * Unban a user from a subreddit's wiki.
+     *
      * @param string $subreddit Subreddit from which to unban the user.
      * @param string $user Username of user to unban.
      * @return mixed|null Response of API call on success. Null if failed.
@@ -1787,6 +1928,7 @@ class phpRAW
 
     /**
      * Add a user as a contributor to a subreddit's wiki.
+     *
      * @param string $subreddit Subreddit to which to add user.
      * @param string $user Username of user to add.
      * @return mixed|null Response of API call on success. Null if failed.
@@ -1810,6 +1952,7 @@ class phpRAW
 
     /**
      * Remove a user as a contributor from a subreddit's wiki.
+     *
      * @param string $subreddit Subreddit from which to remove the user.
      * @param string $user Username of user to remove.
      * @return mixed|null Response of API call on success. Null if failed.
@@ -1831,19 +1974,41 @@ class phpRAW
     }
 
 
-    //-----------------------------------------
-    // Multis
-    //-----------------------------------------
+    /*
+    |--------------------------------------------------------------------------
+    | Multis
+    |--------------------------------------------------------------------------
+    |
+    | Here is where you can access to all of the API endpoints relating to
+    | multis.
+    | TODO: Add endpoints.
+    |
+    */
 
-    //-----------------------------------------
-    // Search
-    //-----------------------------------------
+    /*
+    |--------------------------------------------------------------------------
+    | Search
+    |--------------------------------------------------------------------------
+    |
+    | Here is where you can access to all of the API endpoints relating to
+    | search.
+    | TODO: Add endpoints.
+    |
+    */
 
-    //-----------------------------------------
-    // Subreddits
-    //-----------------------------------------
+    /*
+    |--------------------------------------------------------------------------
+    | Subreddits
+    |--------------------------------------------------------------------------
+    |
+    | Here is where you can access to all of the API endpoints relating to
+    | subreddits.
+    | TODO: Check missing endpoints.
+    |
+    */
     /**
      * Retrieves information about the specified subreddit, including subreddit ID.
+     *
      * @param string $subreddit Name of subreddit for which to retrieve information.
      * @return mixed|null Returns an object with subreddit data on success. Null if failed.
      */
@@ -1860,6 +2025,7 @@ class phpRAW
 
     /**
      * Retrieve a list of the subreddit's settings.
+     *
      * @param string $subreddit The subreddit to retrieve.
      * @return mixed|null An object with subreddit settings as properties. Null if failed.
      */
@@ -1876,6 +2042,7 @@ class phpRAW
 
     /**
      * Retrieves the "submitting to /r/$subreddit" text for the selected subreddit.
+     *
      * @param string $subreddit Name of subreddit to use.
      * @return string|null Returns a string of the subreddit's submit_text. 0-length string if none, null if failed.
      */
@@ -1890,14 +2057,36 @@ class phpRAW
         return $response->submit_text;
     }
 
-    //-----------------------------------------
-    // Users
-    //-----------------------------------------
+    /*
+    |--------------------------------------------------------------------------
+    | Users
+    |--------------------------------------------------------------------------
+    |
+    | Here is where you can access to all of the API endpoints relating to
+    | users.
+    | TODO: Add endpoints.
+    |
+    */
 
-    //-----------------------------------------
-    // Wiki
-    //-----------------------------------------
+    /*
+    |--------------------------------------------------------------------------
+    | Wiki
+    |--------------------------------------------------------------------------
+    |
+    | Here is where you can access to all of the API endpoints relating to
+    | the wiki.
+    | TODO: Add endpoints.
+    |
+    */
 
+    /*
+    |--------------------------------------------------------------------------
+    | Helper Methods
+    |--------------------------------------------------------------------------
+    |
+    | Helper functions for using the API.
+    |
+    */
     public function apiCall($path, $method = 'GET', $params = null)
     {
         $url = $this->endpoint . $path;
