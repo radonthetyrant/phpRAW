@@ -1,23 +1,27 @@
 <?php
 
-namespace Phapper;
+namespace phpRAP;
 
 
-class Live {
+class Live
+{
     /** @var Phapper */
     private $phapper;
     private $thread_id;
 
-    public function __construct($phapper, $thread_id) {
+    public function __construct($phapper, $thread_id)
+    {
         $this->phapper = $phapper;
         $this->thread_id = $thread_id;
     }
 
-    public function getThreadId() {
+    public function getThreadId()
+    {
         return $this->thread_id;
     }
 
-    public function update($body) {
+    public function update($body)
+    {
         $params = array(
             'api_type' => 'json',
             'body' => $body
@@ -27,7 +31,8 @@ class Live {
         return $response;
     }
 
-    public function close() {
+    public function close()
+    {
         $params = array(
             'api_type' => 'json'
         );

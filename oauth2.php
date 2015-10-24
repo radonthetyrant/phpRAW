@@ -1,9 +1,10 @@
 <?php
 
-namespace Phapper;
+namespace phpRAP;
 
 
-class OAuth2 {
+class OAuth2
+{
     private $access_token;
     private $token_type;
     private $expiration;
@@ -15,7 +16,8 @@ class OAuth2 {
     private $app_secret;
     private $user_agent;
 
-    public function __construct($username, $password, $app_id, $app_secret, $user_agent) {
+    public function __construct($username, $password, $app_id, $app_secret, $user_agent)
+    {
         $this->username = $username;
         $this->password = $password;
         $this->app_id = $app_id;
@@ -25,8 +27,9 @@ class OAuth2 {
         $this->requestAccessToken();
     }
 
-    public function getAccessToken() {
-        if (!(isset($this->access_token) && isset($this->token_type) && time()<$this->expiration)) {
+    public function getAccessToken()
+    {
+        if (!(isset($this->access_token) && isset($this->token_type) && time() < $this->expiration)) {
             $this->requestAccessToken();
         }
 
@@ -36,7 +39,8 @@ class OAuth2 {
         );
     }
 
-    private function requestAccessToken() {
+    private function requestAccessToken()
+    {
         $url = "https://www.reddit.com/api/v1/access_token";
         $params = array(
             'grant_type' => 'password',
@@ -45,7 +49,7 @@ class OAuth2 {
         );
 
         $options[CURLOPT_USERAGENT] = $this->user_agent;
-        $options[CURLOPT_USERPWD] = $this->app_id.':'.$this->app_secret;
+        $options[CURLOPT_USERPWD] = $this->app_id . ':' . $this->app_secret;
         $options[CURLOPT_RETURNTRANSFER] = true;
         $options[CURLOPT_CONNECTTIMEOUT] = 5;
         $options[CURLOPT_TIMEOUT] = 10;
@@ -62,8 +66,7 @@ class OAuth2 {
 
             if (isset($response->access_token)) {
                 $got_token = true;
-            }
-            else {
+            } else {
                 echo "ERROR: Access token request failed. Check your credentials.\n";
                 sleep(5);
             }
@@ -71,7 +74,7 @@ class OAuth2 {
 
         $this->access_token = $response->access_token;
         $this->token_type = $response->token_type;
-        $this->expiration = time()+$response->expires_in;
+        $this->expiration = time() + $response->expires_in;
         $this->scope = $response->scope;
     }
 }

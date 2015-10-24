@@ -1,6 +1,6 @@
 <?php
 
-namespace Phapper;
+namespace phpRAP;
 
 define('REDDIT_USERNAME',   '');
 define('REDDIT_PASSWORD',   '');
