@@ -8,9 +8,6 @@
       "email": "egerkevinjames@gmail.com"
     }
   ],
-  "require": {
-    "vendor/package": "dev-master"
-  },
   "repositories": [
     {
       "type": "vcs",
