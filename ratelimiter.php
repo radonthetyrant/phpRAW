@@ -1,6 +1,6 @@
 <?php
 
-namespace phpRAP;
+namespace phpRAW;
 
 class RateLimiter
 {

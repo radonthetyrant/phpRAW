@@ -1,17 +1,16 @@
 <?php
 
-namespace phpRAP;
+namespace phpRAW;
 
 
 class Live
 {
-    /** @var Phapper */
-    private $phapper;
+    private $phpraw;
     private $thread_id;
 
-    public function __construct($phapper, $thread_id)
+    public function __construct($phpraw, $thread_id)
     {
-        $this->phapper = $phapper;
+        $this->phpraw = $phpraw;
         $this->thread_id = $thread_id;
     }
 
@@ -26,7 +25,7 @@ class Live
             'api_type' => 'json',
             'body' => $body
         );
-        $response = $this->phapper->apiCall("/api/live/$this->thread_id/update", 'POST', $params);
+        $response = $this->phpraw->apiCall("/api/live/$this->thread_id/update", 'POST', $params);
 
         return $response;
     }
@@ -36,7 +35,7 @@ class Live
         $params = array(
             'api_type' => 'json'
         );
-        $response = $this->phapper->apiCall("/api/live/$this->thread_id/close_thread", 'POST', $params);
+        $response = $this->phpraw->apiCall("/api/live/$this->thread_id/close_thread", 'POST', $params);
 
         var_dump($response);
     }

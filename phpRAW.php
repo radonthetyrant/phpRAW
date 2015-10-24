@@ -1,6 +1,6 @@
 <?php
 
-namespace phpRAP;
+namespace phpRAW;
 
 require_once('config.php');
 require_once('oauth2.php');
@@ -8,7 +8,7 @@ require_once('ratelimiter.php');
 require_once('live.php');
 
 
-class phpRAP
+class phpRAW
 {
     /** @var OAuth2 */
     private $oauth2;
@@ -21,7 +21,7 @@ class phpRAP
 
     private $debug;
 
-    public function __construct($auth_type = 'oauth', $username = REDDIT_USERNAME, $password = REDDIT_PASSWORD, $app_id = REDDIT_APP_ID, $app_secret = REDDIT_APP_SECRET, $user_agent = PHAPPER_USER_AGENT, $endpoint = PHAPPER_OAUTH_ENDPOINT)
+    public function __construct($auth_type = 'oauth', $username = REDDIT_USERNAME, $password = REDDIT_PASSWORD, $app_id = REDDIT_APP_ID, $app_secret = REDDIT_APP_SECRET, $user_agent = PHPRAW_USER_AGENT, $endpoint = PHPRAW_OAUTH_ENDPOINT)
     {
         if ($auth_type == 'oauth') {
             $this->oauth2 = new OAuth2($username, $password, $app_id, $app_secret, $user_agent);
