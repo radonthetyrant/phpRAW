@@ -2067,6 +2067,13 @@ class phpRAW
     | TODO: Add endpoints.
     |
     */
+    public function getAboutUser($user)
+    {
+        print("/r/$user.json");
+        $response = $this->apiCall("/r/$user/about.json");
+
+        return $response;
+    }
 
     /*
     |--------------------------------------------------------------------------
