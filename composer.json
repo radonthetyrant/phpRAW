@@ -14,5 +14,13 @@
       "url": "https://github.com/kevineger/phpRAW"
     }
   ],
-  "minimum-stability": "dev"
+  "minimum-stability": "dev",
+  "require-dev": {
+    "phpspec/phpspec": "^2.2@dev"
+  },
+  "autoload": {
+    "psr-4": {
+      "phpRAW\\": "src"
+    }
+  }
 }

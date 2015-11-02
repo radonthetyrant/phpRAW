@@ -10,7 +10,7 @@ class OAuth2
     private $expiration;
     private $scope;
 
-    private $username;
+    public $username;
     private $password;
     private $app_id;
     private $app_secret;

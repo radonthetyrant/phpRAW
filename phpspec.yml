@@ -1,0 +1,6 @@
+suites:
+  phpraw_suite:
+    namespace: phpRAW
+    src_path: src
+    spec_path: .
+    spec_prefix: spec
