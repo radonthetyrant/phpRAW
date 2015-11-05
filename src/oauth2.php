@@ -16,15 +16,6 @@ class OAuth2
     private $app_secret;
     private $user_agent;
 
-    /**
-     * Instantiate global variables and request access token.
-     *
-     * @param $username
-     * @param $password
-     * @param $app_id
-     * @param $app_secret
-     * @param $user_agent
-     */
     public function __construct($username, $password, $app_id, $app_secret, $user_agent)
     {
         $this->username = $username;
@@ -36,11 +27,6 @@ class OAuth2
         $this->requestAccessToken();
     }
 
-    /**
-     * Accessor method for getting access token.
-     *
-     * @return array
-     */
     public function getAccessToken()
     {
         if (!(isset($this->access_token) && isset($this->token_type) && time() < $this->expiration)) {
@@ -53,9 +39,6 @@ class OAuth2
         );
     }
 
-    /**
-     * Request an access token from /api/v1/access_token.
-     */
     private function requestAccessToken()
     {
         $url = "https://www.reddit.com/api/v1/access_token";
@@ -73,8 +56,9 @@ class OAuth2
         $options[CURLOPT_CUSTOMREQUEST] = 'POST';
         $options[CURLOPT_POSTFIELDS] = $params;
 
+        $response = null;
         $got_token = false;
-        do {
+        while (!$got_token) {
             $ch = curl_init($url);
             curl_setopt_array($ch, $options);
             $response_raw = curl_exec($ch);
@@ -84,14 +68,35 @@ class OAuth2
             if (isset($response->access_token)) {
                 $got_token = true;
             } else {
-                echo "ERROR: Access token request failed. Check your credentials.\n";
-                sleep(5);
+                if (isset($response->error)) {
+                    if ($response->error === "invalid_grant") {
+                        throw new RedditAuthenticationException("Supplied reddit username/password are invalid or the threshold for invalid logins has been exceeded.", 1);
+                    } elseif ($response->error === 401) {
+                        throw new RedditAuthenticationException("Supplied reddit app ID/secret are invalid.", 2);
+                    }
+                } else {
+                    fwrite(STDERR, "WARNING: Request for reddit access token has failed. Check your connection.\n");
+                    sleep(5);
+                }
             }
-        } while (!$got_token);
+        }
 
         $this->access_token = $response->access_token;
         $this->token_type = $response->token_type;
         $this->expiration = time() + $response->expires_in;
         $this->scope = $response->scope;
+    }
+}
+
+class RedditAuthenticationException extends \Exception
+{
+    public function __construct($message, $code = 0, \Exception $previous = null)
+    {
+        parent::__construct($message, $code, $previous);
+    }
+
+    public function __toString()
+    {
+        return __CLASS__ . ": [{$this->code}]: {$this->message}";
     }
 }

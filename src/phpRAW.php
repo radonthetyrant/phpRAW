@@ -8,7 +8,8 @@ require_once('ratelimiter.php');
 require_once('live.php');
 
 
-class phpRAW {
+class phpRAW
+{
 
     private $oauth2;
     public $ratelimiter;
@@ -16,28 +17,20 @@ class phpRAW {
     private $endpoint;
     private $debug;
 
-    /**
-     * @param string $auth_type
-     * @param string $username
-     * @param string $password
-     * @param string $app_id
-     * @param string $app_secret
-     * @param string $user_agent
-     * @param string $endpoint
-     */
-    public function __construct($auth_type = 'oauth', $username = REDDIT_USERNAME, $password = REDDIT_PASSWORD, $app_id = REDDIT_APP_ID, $app_secret = REDDIT_APP_SECRET, $user_agent = PHPRAW_USER_AGENT, $endpoint = PHPRAW_OAUTH_ENDPOINT)
+    public function __construct($username = null, $password = null, $app_id = null, $app_secret = null, $user_agent = null, $basic_endpoint = null, $oauth_endpoint = null)
     {
-        if ($auth_type == 'oauth')
-        {
-            $this->oauth2 = new OAuth2($username, $password, $app_id, $app_secret, $user_agent);
-            $this->ratelimiter = new RateLimiter(true, 1);
-        } elseif ($auth_type == 'cookie')
-        {
-            return null;
-        }
-
-        $this->user_agent = $user_agent;
-        $this->endpoint = $endpoint;
+        $reddit_username = (is_null($username)) ? phpRAWConfig::$username : $username;
+        $reddit_password = (is_null($password)) ? phpRAWConfig::$password : $password;
+        $reddit_app_id = (is_null($app_id)) ? phpRAWConfig::$app_id : $app_id;
+        $reddit_app_secret = (is_null($app_secret)) ? phpRAWConfig::$app_secret : $app_secret;
+        $phpRAW_user_agent = (is_null($user_agent)) ? phpRAWConfig::$user_agent : $user_agent;
+        $reddit_basic_endpoint = (is_null($basic_endpoint)) ? phpRAWConfig::$basic_endpoint : $basic_endpoint;
+        $reddit_oauth_endpoint = (is_null($oauth_endpoint)) ? phpRAWConfig::$oauth_endpoint : $oauth_endpoint;
+        $this->oauth2 = new OAuth2($reddit_username, $reddit_password, $reddit_app_id, $reddit_app_secret, $phpRAW_user_agent);
+        $this->ratelimiter = new RateLimiter(true, 1);
+        $this->user_agent = $phpRAW_user_agent;
+        $this->basic_endpoint = $reddit_basic_endpoint;
+        $this->oauth_endpoint = $reddit_oauth_endpoint;
         $this->debug = false;
     }
 
@@ -64,8 +57,7 @@ class phpRAW {
         $response = $this->apiCall("/api/v1/me");
 
         //might need the current user ID later, so may as well record it now
-        if (isset($response->id))
-        {
+        if (isset($response->id)) {
             $this->user_id = 't2_' . $response->id;
         }
 
@@ -100,8 +92,7 @@ class phpRAW {
         $prefs = $this->getMyPrefs();
         $params = get_object_vars($prefs);
 
-        foreach ($settings as $key => $value)
-        {
+        foreach ($settings as $key => $value) {
             $params[$key] = $value;
         }
 
@@ -150,10 +141,10 @@ class phpRAW {
     public function getUserFlairList($subreddit, $limit = 25, $after = null, $before = null)
     {
         $params = array(
-            'after'  => $after,
+            'after' => $after,
             'before' => $before,
-            'limit'  => $limit,
-            'show'   => 'all'
+            'limit' => $limit,
+            'show' => 'all'
         );
 
         $response = $this->apiCall("/r/$subreddit/api/flairlist.json", 'GET', $params);
@@ -174,12 +165,12 @@ class phpRAW {
     public function addFlairTemplate($subreddit, $type, $text = null, $css_class = null, $editable = false, $template_id = null)
     {
         $params = array(
-            'api_type'          => 'json',
-            'css_class'         => $css_class,
+            'api_type' => 'json',
+            'css_class' => $css_class,
             'flair_template_id' => $template_id,
-            'flair_type'        => ($type == 'link') ? 'LINK_FLAIR' : 'USER_FLAIR',
-            'text'              => $text,
-            'text_editable'     => ($editable) ? 'true' : 'false'
+            'flair_type' => ($type == 'link') ? 'LINK_FLAIR' : 'USER_FLAIR',
+            'text' => $text,
+            'text_editable' => ($editable) ? 'true' : 'false'
         );
 
         return $this->apiCall("/r/$subreddit/api/flairtemplate", 'POST', $params);
@@ -193,13 +184,12 @@ class phpRAW {
      */
     public function clearFlairTemplates($subreddit, $type)
     {
-        if ($type !== 'user' && $type !== 'link')
-        {
+        if ($type !== 'user' && $type !== 'link') {
             return null;
         }
 
         $params = array(
-            'api_type'   => 'json',
+            'api_type' => 'json',
             'flair_type' => $type
         );
 
@@ -216,7 +206,7 @@ class phpRAW {
     public function deleteFlairTemplate($subreddit, $template_id)
     {
         $params = array(
-            'api_type'          => 'json',
+            'api_type' => 'json',
             'flair_template_id' => $template_id
         );
 
@@ -233,7 +223,7 @@ class phpRAW {
     {
         $params = array(
             'api_type' => 'json',
-            'name'     => $user
+            'name' => $user
         );
 
         return $this->apiCall("/r/$subreddit/api/deleteflair", 'POST', $params);
@@ -280,10 +270,10 @@ class phpRAW {
     public function selectUserFlair($subreddit, $user, $template_id = null, $text = null)
     {
         $params = array(
-            'api_type'          => 'json',
+            'api_type' => 'json',
             'flair_template_id' => $template_id,
-            'name'              => $user,
-            'text'              => $text
+            'name' => $user,
+            'text' => $text
         );
 
         return $this->apiCall("/r/$subreddit/api/selectflair", 'POST', $params);
@@ -299,10 +289,10 @@ class phpRAW {
     public function selectLinkFlair($thing_id, $template_id = null, $text = null)
     {
         $params = array(
-            'api_type'          => 'json',
+            'api_type' => 'json',
             'flair_template_id' => $template_id,
-            'link'              => $thing_id,
-            'text'              => $text
+            'link' => $thing_id,
+            'text' => $text
         );
 
         return $this->apiCall("/api/selectflair", 'POST', $params);
@@ -319,10 +309,10 @@ class phpRAW {
     public function assignUserFlair($subreddit, $user, $text = null, $css_class = null)
     {
         $params = array(
-            'api_type'  => 'json',
+            'api_type' => 'json',
             'css_class' => $css_class,
-            'name'      => $user,
-            'text'      => $text
+            'name' => $user,
+            'text' => $text
         );
 
         return $this->apiCall("/r/$subreddit/api/flair", 'POST', $params);
@@ -339,10 +329,10 @@ class phpRAW {
     public function assignLinkFlair($subreddit, $thing_id, $text = null, $css_class = null)
     {
         $params = array(
-            'api_type'  => 'json',
+            'api_type' => 'json',
             'css_class' => $css_class,
-            'link'      => $thing_id,
-            'text'      => $text
+            'link' => $thing_id,
+            'text' => $text
         );
 
         return $this->apiCall("/r/$subreddit/api/flair", 'POST', $params);
@@ -357,7 +347,7 @@ class phpRAW {
     public function showMyFlair($subreddit, $show = true)
     {
         $params = array(
-            'api_type'      => 'json',
+            'api_type' => 'json',
             'flair_enabled' => ($show) ? 'true' : 'false'
         );
 
@@ -376,22 +366,20 @@ class phpRAW {
      */
     public function configureSubredditFlair($subreddit, $user_enabled, $user_position, $user_self_assign, $link_position, $link_self_assign)
     {
-        if (!($user_position == 'left' || $user_position == 'right') || !(is_null($link_position) || $link_position == 'none' || $link_position == 'left' || $link_position == 'right'))
-        {
+        if (!($user_position == 'left' || $user_position == 'right') || !(is_null($link_position) || $link_position == 'none' || $link_position == 'left' || $link_position == 'right')) {
             return null;
         }
 
-        if ($link_position == 'none')
-        {
+        if ($link_position == 'none') {
             $link_position = null;
         }
 
         $params = array(
-            'api_type'                       => 'json',
-            'flair_enabled'                  => ($user_enabled) ? 'true' : 'false',
-            'flair_position'                 => $user_position,
-            'flair_self_assign_enabled'      => ($user_self_assign) ? 'true' : 'false',
-            'link_flair_position'            => $link_position,
+            'api_type' => 'json',
+            'flair_enabled' => ($user_enabled) ? 'true' : 'false',
+            'flair_position' => $user_position,
+            'flair_self_assign_enabled' => ($user_self_assign) ? 'true' : 'false',
+            'link_flair_position' => $link_position,
             'link_flair_self_assign_enabled' => ($link_self_assign) ? 'true' : 'false'
         );
 
@@ -430,7 +418,7 @@ class phpRAW {
     public function giveGold($user, $months = 1)
     {
         $params = array(
-            'months'   => strval($months),
+            'months' => strval($months),
             'username' => $user
         );
 
@@ -452,20 +440,19 @@ class phpRAW {
     public function submitLinkPost($subreddit, $title, $url, $send_replies = true, $distinguish = false)
     {
         $params = array(
-            'api_type'    => 'json',
-            'extension'   => 'json',
-            'kind'        => 'link',
-            'resubmit'    => 'true',
+            'api_type' => 'json',
+            'extension' => 'json',
+            'kind' => 'link',
+            'resubmit' => 'true',
             'sendreplies' => ($send_replies) ? 'true' : 'false',
-            'sr'          => $subreddit,
-            'title'       => $title,
-            'url'         => $url
+            'sr' => $subreddit,
+            'title' => $title,
+            'url' => $url
         );
 
         $response = $this->apiCall("/api/submit", 'POST', $params);
 
-        if ($distinguish && isset($response->json->data->name))
-        {
+        if ($distinguish && isset($response->json->data->name)) {
             $this->distinguish($response->json->data->name, true);
         }
 
@@ -484,20 +471,19 @@ class phpRAW {
     public function submitTextPost($subreddit, $title, $text = null, $send_replies = true, $distinguish = false)
     {
         $params = array(
-            'api_type'    => 'json',
-            'extension'   => 'json',
-            'kind'        => 'self',
-            'resubmit'    => 'true',
+            'api_type' => 'json',
+            'extension' => 'json',
+            'kind' => 'self',
+            'resubmit' => 'true',
             'sendreplies' => ($send_replies) ? 'true' : 'false',
-            'sr'          => $subreddit,
-            'text'        => $text,
-            'title'       => $title
+            'sr' => $subreddit,
+            'text' => $text,
+            'title' => $title
         );
 
         $response = $this->apiCall("/api/submit", 'POST', $params);
 
-        if ($distinguish && isset($response->json->data->name))
-        {
+        if ($distinguish && isset($response->json->data->name)) {
             $this->distinguish($response->json->data->name, true);
         }
 
@@ -515,17 +501,15 @@ class phpRAW {
     {
         $params = array(
             'api_type' => 'json',
-            'text'     => $text,
+            'text' => $text,
             'thing_id' => $parent
         );
 
         $response = $this->apiCall("/api/comment", 'POST', $params);
 
-        if ($distinguish && isset($response->json->data->things[0]->data->name))
-        {
+        if ($distinguish && isset($response->json->data->things[0]->data->name)) {
             $dist_response = $this->distinguish($response->json->data->things[0]->data->name, true);
-            if (isset($dist_response->json->errors) && count($dist_response->json->errors) == 0)
-            {
+            if (isset($dist_response->json->errors) && count($dist_response->json->errors) == 0) {
                 $response = $dist_response;
             }
         }
@@ -558,7 +542,7 @@ class phpRAW {
     {
         $params = array(
             'api_type' => 'json',
-            'text'     => $text,
+            'text' => $text,
             'thing_id' => $thing_id
         );
 
@@ -572,8 +556,7 @@ class phpRAW {
      */
     public function hide($thing_ids)
     {
-        if (is_array($thing_ids))
-        {
+        if (is_array($thing_ids)) {
             $thing_ids = implode(',', $thing_ids);
         }
 
@@ -591,8 +574,7 @@ class phpRAW {
      */
     public function unhide($thing_ids)
     {
-        if (is_array($thing_ids))
-        {
+        if (is_array($thing_ids)) {
             $thing_ids = implode(',', $thing_ids);
         }
 
@@ -610,8 +592,7 @@ class phpRAW {
      */
     public function getInfo($thing_ids)
     {
-        if (is_array($thing_ids))
-        {
+        if (is_array($thing_ids)) {
             $thing_ids = implode(',', $thing_ids);
         }
 
@@ -659,15 +640,12 @@ class phpRAW {
      */
     public function getCommentChildren($link_id, $comment_ids)
     {
-        if (!is_array($comment_ids))
-        {
+        if (!is_array($comment_ids)) {
             $comment_ids = explode(',', $comment_ids);
         }
 
-        for ($i = 0; $i < count($comment_ids); $i++)
-        {
-            if (strpos($comment_ids[$i], 't1_') === 0)
-            {
+        for ($i = 0; $i < count($comment_ids); $i++) {
+            if (strpos($comment_ids[$i], 't1_') === 0) {
                 $comment_ids[$i] = substr($comment_ids[$i], 3);
             }
         }
@@ -677,7 +655,7 @@ class phpRAW {
         $params = array(
             'api_type' => 'json',
             'children' => $comment_ids,
-            'link_id'  => $link_id
+            'link_id' => $link_id
         );
 
         return $this->apiCall("/api/morechildren", 'GET', $params);
@@ -693,7 +671,7 @@ class phpRAW {
     {
         $params = array(
             'api_type' => 'json',
-            'reason'   => $reason,
+            'reason' => $reason,
             'thing_id' => $thing_id
         );
 
@@ -710,7 +688,7 @@ class phpRAW {
     {
         $params = array(
             'category' => $category,
-            'id'       => $thing_id
+            'id' => $thing_id
         );
 
         return $this->apiCall("/api/save", 'POST', $params);
@@ -748,7 +726,7 @@ class phpRAW {
     public function sendInboxReplies($thing_id, $state = true)
     {
         $params = array(
-            'id'    => $thing_id,
+            'id' => $thing_id,
             'state' => ($state) ? 'true' : 'false'
         );
 
@@ -762,8 +740,7 @@ class phpRAW {
      */
     public function storeVisits($thing_ids)
     {
-        if (is_array($thing_ids))
-        {
+        if (is_array($thing_ids)) {
             $thing_ids = implode(',', $thing_ids);
         }
 
@@ -786,7 +763,7 @@ class phpRAW {
     {
         $params = array(
             'dir' => '1',
-            'id'  => $thing_id
+            'id' => $thing_id
         );
 
         return $this->apiCall("/api/vote", 'POST', $params);
@@ -801,7 +778,7 @@ class phpRAW {
     {
         $params = array(
             'dir' => '-1',
-            'id'  => $thing_id
+            'id' => $thing_id
         );
 
         return $this->apiCall("/api/vote", 'POST', $params);
@@ -816,7 +793,7 @@ class phpRAW {
     {
         $params = array(
             'dir' => '0',
-            'id'  => $thing_id
+            'id' => $thing_id
         );
 
         return $this->apiCall("/api/vote", 'POST', $params);
@@ -838,18 +815,17 @@ class phpRAW {
     private function getSubredditListing($listing, $subreddit, $limit, $after, $before, $time = null)
     {
         $params = array(
-            't'      => $time,
-            'after'  => $after,
+            't' => $time,
+            'after' => $after,
             'before' => $before,
-            'limit'  => $limit,
-            'show'   => 'all'
+            'limit' => $limit,
+            'show' => 'all'
         );
         $api_sr = ($subreddit) ? "/r/$subreddit" : "";
 
         $response = $this->apiCall("$api_sr/$listing.json", 'GET', $params);
 
-        if (isset($response->error))
-        {
+        if (isset($response->error)) {
             return null;
         }
 
@@ -863,8 +839,7 @@ class phpRAW {
      */
     public function getLinksById($thing_ids)
     {
-        if (is_array($thing_ids))
-        {
+        if (is_array($thing_ids)) {
             $thing_ids = implode(',', $thing_ids);
         }
 
@@ -885,25 +860,23 @@ class phpRAW {
      */
     public function getComments($link_id, $comment_id = null, $context = null, $depth = null, $limit = null, $sort = null, $show_edits = false, $show_more = false)
     {
-        if (strpos($link_id, 't3_') === 0)
-        {
+        if (strpos($link_id, 't3_') === 0) {
             $link_id = substr($link_id, 3);
         }
 
-        if (strpos($comment_id, 't1_') === 0)
-        {
+        if (strpos($comment_id, 't1_') === 0) {
             $comment_id = substr($comment_id, 3);
         }
 
         $params = array(
-            'article'   => $link_id,
-            'comment'   => $comment_id,
-            'context'   => strval($context),
-            'depth'     => strval($depth),
-            'limit'     => strval($limit),
+            'article' => $link_id,
+            'comment' => $comment_id,
+            'context' => strval($context),
+            'depth' => strval($depth),
+            'limit' => strval($limit),
             'showedits' => ($show_edits) ? 'true' : 'false',
-            'showmore'  => ($show_more) ? 'true' : 'false',
-            'sort'      => $sort
+            'showmore' => ($show_more) ? 'true' : 'false',
+            'sort' => $sort
         );
 
         return $this->apiCall("/comments/$link_id", 'GET', $params);
@@ -919,17 +892,16 @@ class phpRAW {
      */
     public function getDuplicateLinks($thing_id, $limit = 25, $after = null, $before = null)
     {
-        if (strpos($thing_id, 't3_') === 0)
-        {
+        if (strpos($thing_id, 't3_') === 0) {
             $thing_id = substr($thing_id, 3);
         }
 
         $params = array(
-            'after'   => $after,
+            'after' => $after,
             'article' => $thing_id,
-            'before'  => $before,
-            'limit'   => $limit,
-            'show'    => 'all'
+            'before' => $before,
+            'limit' => $limit,
+            'show' => 'all'
         );
 
         return $this->apiCall("/duplicates/$thing_id", 'GET', $params);
@@ -1010,17 +982,16 @@ class phpRAW {
      */
     public function getRelatedLinks($thing_id, $limit = 25, $after = null, $before = null)
     {
-        if (strpos($thing_id, 't3_') === 0)
-        {
+        if (strpos($thing_id, 't3_') === 0) {
             $thing_id = substr($thing_id, 3);
         }
 
         $params = array(
-            'after'   => $after,
+            'after' => $after,
             'article' => $thing_id,
-            'before'  => $before,
-            'limit'   => $limit,
-            'show'    => 'all'
+            'before' => $before,
+            'limit' => $limit,
+            'show' => 'all'
         );
 
         return $this->apiCall("/related/$thing_id", 'GET', $params);
@@ -1040,17 +1011,16 @@ class phpRAW {
     public function createLiveThread($title, $description = null, $resources = null, $nsfw = false)
     {
         $params = array(
-            'api_type'    => 'json',
+            'api_type' => 'json',
             'description' => $description,
-            'nsfw'        => ($nsfw) ? 'true' : 'false',
-            'resources'   => $resources,
-            'title'       => $title
+            'nsfw' => ($nsfw) ? 'true' : 'false',
+            'resources' => $resources,
+            'title' => $title
         );
 
         $response = $this->apiCall('/api/live/create', 'POST', $params);
 
-        if (isset($response->json->data->id))
-        {
+        if (isset($response->json->data->id)) {
             return new Live($this, $response->json->data->id);
         }
 
@@ -1092,8 +1062,7 @@ class phpRAW {
      */
     public function collapseMessage($thing_ids)
     {
-        if (is_array($thing_ids))
-        {
+        if (is_array($thing_ids)) {
             $thing_ids = explode(',', $thing_ids);
         }
 
@@ -1112,8 +1081,7 @@ class phpRAW {
      */
     public function uncollapseMessage($thing_ids)
     {
-        if (is_array($thing_ids))
-        {
+        if (is_array($thing_ids)) {
             $thing_ids = explode(',', $thing_ids);
         }
 
@@ -1136,10 +1104,10 @@ class phpRAW {
     {
         $params = array(
             'api_type' => 'json',
-            'from_sr'  => $from_subreddit,
-            'subject'  => $subject,
-            'text'     => $body,
-            'to'       => $to
+            'from_sr' => $from_subreddit,
+            'subject' => $subject,
+            'text' => $body,
+            'to' => $to
         );
 
         return $this->apiCall("/api/compose", 'POST', $params);
@@ -1162,8 +1130,7 @@ class phpRAW {
      */
     public function markMessageRead($thing_ids)
     {
-        if (is_array($thing_ids))
-        {
+        if (is_array($thing_ids)) {
             $thing_ids = implode(',', $thing_ids);
         }
 
@@ -1181,8 +1148,7 @@ class phpRAW {
      */
     public function markMessageUnread($thing_ids)
     {
-        if (is_array($thing_ids))
-        {
+        if (is_array($thing_ids)) {
             $thing_ids = implode(',', $thing_ids);
         }
 
@@ -1217,10 +1183,10 @@ class phpRAW {
     public function getInbox($limit = 25, $after = null, $before = null)
     {
         $params = array(
-            'after'  => $after,
+            'after' => $after,
             'before' => $before,
-            'limit'  => $limit,
-            'show'   => 'all'
+            'limit' => $limit,
+            'show' => 'all'
         );
 
         return $this->apiCall("/message/inbox/.json", 'GET', $params);
@@ -1236,10 +1202,10 @@ class phpRAW {
     public function getUnread($limit = 25, $after = null, $before = null)
     {
         $params = array(
-            'after'  => $after,
+            'after' => $after,
             'before' => $before,
-            'limit'  => $limit,
-            'show'   => 'all'
+            'limit' => $limit,
+            'show' => 'all'
         );
 
         return $this->apiCall("/message/unread/.json", 'GET', $params);
@@ -1255,10 +1221,10 @@ class phpRAW {
     public function getSent($limit = 25, $after = null, $before = null)
     {
         $params = array(
-            'after'  => $after,
+            'after' => $after,
             'before' => $before,
-            'limit'  => $limit,
-            'show'   => 'all'
+            'limit' => $limit,
+            'show' => 'all'
         );
 
         return $this->apiCall("/message/sent/.json", 'GET', $params);
@@ -1276,11 +1242,11 @@ class phpRAW {
     public function getModmail($subreddit = 'mod', $messages_read = false, $limit = 25, $after = null, $before = null)
     {
         $params = array(
-            'mark'   => ($messages_read) ? 'true' : 'false',
-            'after'  => $after,
+            'mark' => ($messages_read) ? 'true' : 'false',
+            'after' => $after,
             'before' => $before,
-            'limit'  => $limit,
-            'show'   => 'all'
+            'limit' => $limit,
+            'show' => 'all'
         );
 
         return $this->apiCall("/r/$subreddit/about/message/inbox/.json", 'GET', $params);
@@ -1311,8 +1277,8 @@ class phpRAW {
     {
         $params = array(
             'api_type' => 'json',
-            'id'       => $thing_id,
-            'state'    => ($state) ? 'true' : 'false'
+            'id' => $thing_id,
+            'state' => ($state) ? 'true' : 'false'
         );
 
         return $this->apiCall("/api/set_contest_mode", 'POST', $params);
@@ -1328,9 +1294,9 @@ class phpRAW {
     {
         $params = array(
             'api_type' => 'json',
-            'id'       => $thing_id,
-            'num'      => $num,
-            'state'    => 'true'
+            'id' => $thing_id,
+            'num' => $num,
+            'state' => 'true'
         );
 
         return $this->apiCall("/api/set_subreddit_sticky", 'POST', $params);
@@ -1345,9 +1311,9 @@ class phpRAW {
     {
         $params = array(
             'api_type' => 'json',
-            'id'       => $thing_id,
-            'num'      => null,
-            'state'    => 'false'
+            'id' => $thing_id,
+            'num' => null,
+            'state' => 'false'
         );
 
         return $this->apiCall("/api/set_subreddit_sticky", 'POST', $params);
@@ -1363,8 +1329,8 @@ class phpRAW {
     {
         $params = array(
             'api_type' => 'json',
-            'id'       => $thing_id,
-            'sort'     => $sort
+            'id' => $thing_id,
+            'sort' => $sort
         );
 
         return $this->apiCall("/api/set_suggested_sort", 'POST', $params);
@@ -1379,8 +1345,8 @@ class phpRAW {
     {
         $params = array(
             'api_type' => 'json',
-            'id'       => $thing_id,
-            'sort'     => 'blank'
+            'id' => $thing_id,
+            'sort' => 'blank'
         );
 
         return $this->apiCall("/api/set_suggested_sort", 'POST', $params);
@@ -1396,8 +1362,8 @@ class phpRAW {
     {
         $params = array(
             'api_type' => 'json',
-            'how'      => ($how) ? 'yes' : 'no',
-            'id'       => $thing_id
+            'how' => ($how) ? 'yes' : 'no',
+            'id' => $thing_id
         );
 
         return $this->apiCall("/api/distinguish", 'POST', $params);
@@ -1416,12 +1382,12 @@ class phpRAW {
     public function getModerationLog($subreddit = 'mod', $limit = 25, $after = null, $mod = null, $action = null, $before = null)
     {
         $params = array(
-            'after'  => $after,
+            'after' => $after,
             'before' => $before,
-            'limit'  => "$limit",
-            'mod'    => $mod,
-            'show'   => 'all',
-            'type'   => $action
+            'limit' => "$limit",
+            'mod' => $mod,
+            'show' => 'all',
+            'type' => $action
         );
 
         $response = $this->apiCall("/r/$subreddit/about/log.json", 'GET', $params);
@@ -1442,12 +1408,12 @@ class phpRAW {
     private function getSubredditModListing($subreddit, $location, $limit, $after, $before, $only)
     {
         $params = array(
-            'after'    => $after,
-            'before'   => $before,
-            'limit'    => $limit,
+            'after' => $after,
+            'before' => $before,
+            'limit' => $limit,
             'location' => $location,
-            'only'     => $only,
-            'show'     => 'all'
+            'only' => $only,
+            'show' => 'all'
         );
 
         return $this->apiCall("/r/$subreddit/about/$location.json", 'GET', $params);
@@ -1557,7 +1523,7 @@ class phpRAW {
     public function remove($thing_id)
     {
         $params = array(
-            'id'   => $thing_id,
+            'id' => $thing_id,
             'spam' => 'false'
         );
 
@@ -1572,7 +1538,7 @@ class phpRAW {
     public function spam($thing_id)
     {
         $params = array(
-            'id'   => $thing_id,
+            'id' => $thing_id,
             'spam' => 'true'
         );
 
@@ -1616,8 +1582,7 @@ class phpRAW {
     {
         $subreddit_info = $this->aboutSubreddit($subreddit);
 
-        if (!isset($subreddit_info->data->name))
-        {
+        if (!isset($subreddit_info->data->name)) {
             return null;
         }
 
@@ -1637,8 +1602,7 @@ class phpRAW {
     {
         $subreddit_info = $this->aboutSubreddit($subreddit);
 
-        if (!isset($subreddit_info->data->name))
-        {
+        if (!isset($subreddit_info->data->name)) {
             return null;
         }
 
@@ -1661,12 +1625,12 @@ class phpRAW {
     public function ban($subreddit, $user, $note = null, $message = null, $duration = null)
     {
         $params = array(
-            'api_type'    => 'json',
+            'api_type' => 'json',
             'ban_message' => $message,
-            'duration'    => $duration,
-            'name'        => $user,
-            'note'        => $note,
-            'type'        => 'banned'
+            'duration' => $duration,
+            'name' => $user,
+            'note' => $note,
+            'type' => 'banned'
         );
 
         return $this->apiCall("/r/$subreddit/api/friend", 'POST', $params);
@@ -1698,8 +1662,8 @@ class phpRAW {
     {
         $params = array(
             'api_type' => 'json',
-            'name'     => $user,
-            'type'     => 'contributor'
+            'name' => $user,
+            'type' => 'contributor'
         );
 
         return $this->apiCall("/r/$subreddit/api/friend", 'POST', $params);
@@ -1737,46 +1701,37 @@ class phpRAW {
     public function inviteModerator($subreddit, $user, $perm_all = true, $perm_access = false, $perm_config = false, $perm_flair = false, $perm_mail = false, $perm_posts = false, $perm_wiki = false)
     {
         $permissions = array();
-        if ($perm_all)
-        {
+        if ($perm_all) {
             $permissions[] = '+all';
-        } else
-        {
-            if ($perm_access)
-            {
+        } else {
+            if ($perm_access) {
                 $permissions[] = '+access';
             }
-            if ($perm_config)
-            {
+            if ($perm_config) {
                 $permissions[] = '+config';
             }
-            if ($perm_flair)
-            {
+            if ($perm_flair) {
                 $permissions[] = '+flair';
             }
-            if ($perm_mail)
-            {
+            if ($perm_mail) {
                 $permissions[] = '+mail';
             }
-            if ($perm_posts)
-            {
+            if ($perm_posts) {
                 $permissions[] = '+posts';
             }
-            if ($perm_wiki)
-            {
+            if ($perm_wiki) {
                 $permissions[] = '+wiki';
             }
         }
-        if (count($permissions) == 0)
-        {
+        if (count($permissions) == 0) {
             $permissions = array('-all', '-access', '-config', '-flair', '-mail', '-posts', '-wiki');
         }
 
         $params = array(
-            'api_type'    => 'json',
-            'name'        => $user,
+            'api_type' => 'json',
+            'name' => $user,
             'permissions' => implode(',', $permissions),
-            'type'        => 'moderator_invite'
+            'type' => 'moderator_invite'
         );
 
         return $this->apiCall("/r/$subreddit/api/friend", 'POST', $params);
@@ -1830,46 +1785,37 @@ class phpRAW {
     public function setModeratorPermissions($subreddit, $user, $perm_all = true, $perm_access = false, $perm_config = false, $perm_flair = false, $perm_mail = false, $perm_posts = false, $perm_wiki = false)
     {
         $permissions = array();
-        if ($perm_all)
-        {
+        if ($perm_all) {
             $permissions[] = '+all';
-        } else
-        {
-            if ($perm_access)
-            {
+        } else {
+            if ($perm_access) {
                 $permissions[] = '+access';
             }
-            if ($perm_config)
-            {
+            if ($perm_config) {
                 $permissions[] = '+config';
             }
-            if ($perm_flair)
-            {
+            if ($perm_flair) {
                 $permissions[] = '+flair';
             }
-            if ($perm_mail)
-            {
+            if ($perm_mail) {
                 $permissions[] = '+mail';
             }
-            if ($perm_posts)
-            {
+            if ($perm_posts) {
                 $permissions[] = '+posts';
             }
-            if ($perm_wiki)
-            {
+            if ($perm_wiki) {
                 $permissions[] = '+wiki';
             }
         }
-        if (count($permissions) == 0)
-        {
+        if (count($permissions) == 0) {
             $permissions = array('-all', '-access', '-config', '-flair', '-mail', '-posts', '-wiki');
         }
 
         $params = array(
-            'api_type'    => 'json',
-            'name'        => $user,
+            'api_type' => 'json',
+            'name' => $user,
             'permissions' => implode(',', $permissions),
-            'type'        => 'moderator'
+            'type' => 'moderator'
         );
 
         return $this->apiCall("/r/$subreddit/api/setpermissions", 'POST', $params);
@@ -1891,46 +1837,37 @@ class phpRAW {
     public function setInvitationPermissions($subreddit, $user, $perm_all = true, $perm_access = false, $perm_config = false, $perm_flair = false, $perm_mail = false, $perm_posts = false, $perm_wiki = false)
     {
         $permissions = array();
-        if ($perm_all)
-        {
+        if ($perm_all) {
             $permissions[] = '+all';
-        } else
-        {
-            if ($perm_access)
-            {
+        } else {
+            if ($perm_access) {
                 $permissions[] = '+access';
             }
-            if ($perm_config)
-            {
+            if ($perm_config) {
                 $permissions[] = '+config';
             }
-            if ($perm_flair)
-            {
+            if ($perm_flair) {
                 $permissions[] = '+flair';
             }
-            if ($perm_mail)
-            {
+            if ($perm_mail) {
                 $permissions[] = '+mail';
             }
-            if ($perm_posts)
-            {
+            if ($perm_posts) {
                 $permissions[] = '+posts';
             }
-            if ($perm_wiki)
-            {
+            if ($perm_wiki) {
                 $permissions[] = '+wiki';
             }
         }
-        if (count($permissions) == 0)
-        {
+        if (count($permissions) == 0) {
             $permissions = array('-all', '-access', '-config', '-flair', '-mail', '-posts', '-wiki');
         }
 
         $params = array(
-            'api_type'    => 'json',
-            'name'        => $user,
+            'api_type' => 'json',
+            'name' => $user,
             'permissions' => implode(',', $permissions),
-            'type'        => 'moderator_invite'
+            'type' => 'moderator_invite'
         );
 
         return $this->apiCall("/r/$subreddit/api/setpermissions", 'POST', $params);
@@ -1949,9 +1886,9 @@ class phpRAW {
         $params = array(
             'api_type' => 'json',
             'duration' => $duration,
-            'name'     => $user,
-            'note'     => $note,
-            'type'     => 'wikibanned'
+            'name' => $user,
+            'note' => $note,
+            'type' => 'wikibanned'
         );
 
         $this->apiCall("/r/$subreddit/api/friend", 'POST', $params);
@@ -1983,8 +1920,8 @@ class phpRAW {
     {
         $params = array(
             'api_type' => 'json',
-            'name'     => $user,
-            'type'     => 'wikicontributor'
+            'name' => $user,
+            'type' => 'wikicontributor'
         );
 
         return $this->apiCall("/r/$subreddit/api/friend", 'POST', $params);
@@ -2017,9 +1954,9 @@ class phpRAW {
     {
         $params = array(
             'api_type' => 'json',
-            'name'     => $user,
-            'note'     => $note,
-            'type'     => 'muted'
+            'name' => $user,
+            'note' => $note,
+            'type' => 'muted'
         );
 
         return $this->apiCall("/r/$subreddit/api/friend", 'POST', $params);
@@ -2035,8 +1972,8 @@ class phpRAW {
     {
         $params = array(
             'api_type' => 'json',
-            'name'     => $user,
-            'type'     => 'muted'
+            'name' => $user,
+            'type' => 'muted'
         );
 
         return $this->apiCall("/r/$subreddit/api/unfriend", 'POST', $params);
@@ -2112,8 +2049,8 @@ class phpRAW {
     {
         $params = array(
             'display_name' => $to_name,
-            'from'         => "/user/$from_user/m/$from_name",
-            'to'           => "/user/{$this->oauth2->username}/m/$to_name"
+            'from' => "/user/$from_user/m/$from_name",
+            'to' => "/user/{$this->oauth2->username}/m/$to_name"
         );
 
         return $this->apiCall("/api/multi/copy", 'POST', $params);
@@ -2153,8 +2090,8 @@ class phpRAW {
     {
         $params = array(
             'display_name' => $to_name,
-            'from'         => "/user/{$this->oauth2->username}/m/$from_name",
-            'to'           => "/user/{$this->oauth2->username}/m/$to_name",
+            'from' => "/user/{$this->oauth2->username}/m/$from_name",
+            'to' => "/user/{$this->oauth2->username}/m/$to_name",
         );
 
         return $this->apiCall("/api/multi/rename", 'POST', $params);
@@ -2184,25 +2121,23 @@ class phpRAW {
      */
     public function multiCreate($name, $subreddits = array(), $description = null, $visibility = 'private', $weighting_scheme = 'classic', $icon = null, $key_color = '#cee3f8')
     {
-        if (!is_array($subreddits))
-        {
+        if (!is_array($subreddits)) {
             $subreddits = explode(',', $subreddits);
         }
 
         $named_subreddits = array();
-        foreach ($subreddits as $subreddit)
-        {
+        foreach ($subreddits as $subreddit) {
             $named_subreddits[]['name'] = $subreddit;
         }
 
         $params = array(
             'model' => array(
-                'description_md'   => $description,
-                'display_name'     => $name,
-                'icon_name'        => $icon,
-                'key_color'        => $key_color,
-                'subreddits'       => $named_subreddits,
-                'visibility'       => $visibility,
+                'description_md' => $description,
+                'display_name' => $name,
+                'icon_name' => $icon,
+                'key_color' => $key_color,
+                'subreddits' => $named_subreddits,
+                'visibility' => $visibility,
                 'weighting_scheme' => $weighting_scheme
             )
         );
@@ -2228,44 +2163,36 @@ class phpRAW {
     {
         $model['display_name'] = $name;
 
-        if (!is_null($subreddits))
-        {
-            if (!is_array($subreddits))
-            {
+        if (!is_null($subreddits)) {
+            if (!is_array($subreddits)) {
                 $subreddits = implode(',', $subreddits);
             }
 
             $named_subreddits = array();
-            foreach ($subreddits as $subreddit)
-            {
+            foreach ($subreddits as $subreddit) {
                 $named_subreddits[]['name'] = $subreddit;
             }
 
             $model['subreddits'] = $named_subreddits;
         }
 
-        if (!is_null($description))
-        {
+        if (!is_null($description)) {
             $model['description_md'] = $description;
         }
 
-        if (!is_null($visibility))
-        {
+        if (!is_null($visibility)) {
             $model['visibility'] = $visibility;
         }
 
-        if (!is_null($weighting_scheme))
-        {
+        if (!is_null($weighting_scheme)) {
             $model['weighting_scheme'] = $weighting_scheme;
         }
 
-        if (!is_null($icon))
-        {
+        if (!is_null($icon)) {
             $model['icon_name'] = $icon;
         }
 
-        if (!is_null($key_color))
-        {
+        if (!is_null($key_color)) {
             $model['key_color'] = $key_color;
         }
 
@@ -2368,24 +2295,22 @@ class phpRAW {
      */
     public function search($query, $subreddit = null, $sort = null, $time = null, $type = null, $limit = 25, $after = null, $before = null)
     {
-        if (!empty($subreddit))
-        {
+        if (!empty($subreddit)) {
             $subreddit_prefix = "/r/$subreddit";
-        } else
-        {
+        } else {
             $subreddit_prefix = "";
         }
 
         $params = array(
-            'after'       => $after,
-            'before'      => $before,
-            'limit'       => $limit,
-            'q'           => $query,
+            'after' => $after,
+            'before' => $before,
+            'limit' => $limit,
+            'q' => $query,
             'restrict_sr' => (!empty($subreddit)) ? 'on' : 'off',
-            'show'        => 'all',
-            'sort'        => $sort,
-            't'           => $time,
-            'type'        => $type
+            'show' => 'all',
+            'sort' => $sort,
+            't' => $time,
+            'type' => $type
         );
 
         return $this->apiCall($subreddit_prefix . "/search", 'GET', $params);
@@ -2418,11 +2343,11 @@ class phpRAW {
     private function getSubredditUsers($location, $subreddit, $user, $limit, $after, $before)
     {
         $params = array(
-            'after'  => $after,
+            'after' => $after,
             'before' => $before,
-            'limit'  => $limit,
-            'show'   => 'all',
-            'user'   => $user
+            'limit' => $limit,
+            'show' => 'all',
+            'user' => $user
         );
 
         return $this->apiCall("/r/$subreddit/about/$location.json", 'GET', $params);
@@ -2529,15 +2454,14 @@ class phpRAW {
      */
     public function uploadSubredditImage($subreddit, $file, $name, $upload_type = 'img', $image_type = 'png')
     {
-        if (!realpath($file))
-        {
+        if (!realpath($file)) {
             return null;
         }
 
         $params = array(
-            'file'        => '@' . realpath($file),
-            'img_type'    => $image_type,
-            'name'        => $name,
+            'file' => '@' . realpath($file),
+            'img_type' => $image_type,
+            'name' => $name,
             'upload_type' => $upload_type
         );
 
@@ -2610,13 +2534,12 @@ class phpRAW {
      */
     public function getRecommendedSubreddits($subreddits, $omit = null)
     {
-        if (is_array($subreddits))
-        {
+        if (is_array($subreddits)) {
             $subreddits = implode(',', $subreddits);
         }
 
         $params = array(
-            'omit'    => $omit,
+            'omit' => $omit,
             'srnames' => $subreddits
         );
 
@@ -2633,9 +2556,9 @@ class phpRAW {
     public function searchSubredditsByName($query, $include_nsfw = true, $exact = false)
     {
         $params = array(
-            'exact'           => ($exact) ? 'true' : 'false',
+            'exact' => ($exact) ? 'true' : 'false',
             'include_over_18' => ($include_nsfw) ? 'true' : 'false',
-            'query'           => $query
+            'query' => $query
         );
 
         return $this->apiCall("/api/search_reddit_names", 'POST', $params);
@@ -2671,9 +2594,9 @@ class phpRAW {
     public function setSubredditStylesheet($subreddit, $contents, $reason = null)
     {
         $params = array(
-            'api_type'            => 'json',
-            'op'                  => 'save',
-            'reason'              => $reason,
+            'api_type' => 'json',
+            'op' => 'save',
+            'reason' => $reason,
             'stylesheet_contents' => $contents
         );
 
@@ -2703,14 +2626,13 @@ class phpRAW {
     {
         $subreddit_info = $this->aboutSubreddit($subreddit);
 
-        if (!isset($subreddit_info->data->name))
-        {
+        if (!isset($subreddit_info->data->name)) {
             return null;
         }
 
         $params = array(
             'action' => 'sub',
-            'sr'     => $subreddit_info->data->name
+            'sr' => $subreddit_info->data->name
         );
 
         return $this->apiCall("/api/subscribe", 'POST', $params);
@@ -2725,14 +2647,13 @@ class phpRAW {
     {
         $subreddit_info = $this->aboutSubreddit($subreddit);
 
-        if (!isset($subreddit_info->data->name))
-        {
+        if (!isset($subreddit_info->data->name)) {
             return null;
         }
 
         $params = array(
             'action' => 'unsub',
-            'sr'     => $subreddit_info->data->name
+            'sr' => $subreddit_info->data->name
         );
 
         return $this->apiCall("/api/subscribe", 'POST', $params);
@@ -2768,12 +2689,9 @@ class phpRAW {
         $hot_page = $this->getHot($subreddit, 1);
         $stickies = array();
 
-        if (is_array($hot_page->children))
-        {
-            foreach ($hot_page->children as $post)
-            {
-                if ($post->data->stickied)
-                {
+        if (is_array($hot_page->children)) {
+            foreach ($hot_page->children as $post) {
+                if ($post->data->stickied) {
                     $stickies[] = $post;
                 }
             }
@@ -2794,12 +2712,12 @@ class phpRAW {
     public function searchSubreddits($query, $sort = 'relevance', $limit = 25, $after = null, $before = null)
     {
         $params = array(
-            'after'  => $after,
+            'after' => $after,
             'before' => $before,
-            'limit'  => $limit,
-            'q'      => $query,
-            'show'   => 'all',
-            'sort'   => $sort
+            'limit' => $limit,
+            'q' => $query,
+            'show' => 'all',
+            'sort' => $sort
         );
 
         return $this->apiCall("/subreddits/search", 'GET', $params);
@@ -2816,10 +2734,10 @@ class phpRAW {
     private function getMySubreddits($location, $limit, $after, $before)
     {
         $params = array(
-            'after'  => $after,
+            'after' => $after,
             'before' => $before,
-            'limit'  => $limit,
-            'show'   => 'all'
+            'limit' => $limit,
+            'show' => 'all'
         );
 
         return $this->apiCall("/subreddits/mine/$location", 'GET', $params);
@@ -2872,10 +2790,10 @@ class phpRAW {
     private function getSubreddits($location, $limit, $after, $before)
     {
         $params = array(
-            'after'  => $after,
+            'after' => $after,
             'before' => $before,
-            'limit'  => $limit,
-            'show'   => 'all'
+            'limit' => $limit,
+            'show' => 'all'
         );
 
         return $this->apiCall("/subreddits/$location", 'GET', $params);
@@ -2963,58 +2881,53 @@ class phpRAW {
      */
     public function createSubreddit($subreddit, $settings, $i_read_the_documentation = false)
     {
-        if ($i_read_the_documentation !== true)
-        {
-            echo "Please read the PHPdoc documentation for Phapper::createSubreddit().\n";
+        if ($i_read_the_documentation !== true) {
+            echo "Please read the PHPdoc documentation for phpRAW::createSubreddit().\n";
 
             return null;
         }
 
-        if (empty($subreddit) || empty($settings['title']))
-        {
+        if (empty($subreddit) || empty($settings['title'])) {
             return null;
         }
 
         $params = array(
-            'allow_top'                 => true,
+            'allow_top' => true,
             'collapse_deleted_comments' => false,
-            'comment_score_hide_mins'   => 0,
-            'description'               => "",
-            'exclude_banned_modqueue'   => false,
-            'header-title'              => "",
-            'hide_ads'                  => false,
-            'lang'                      => 'en',
-            'link_type'                 => 'any',
-            'over_18'                   => false,
-            'public_description'        => "",
-            'public_traffic'            => false,
-            'show_media'                => false,
-            'spam_comments'             => 'low',
-            'spam_links'                => 'high',
-            'spam_selfposts'            => 'high',
-            'submit_link_label'         => "",
-            'submit_text'               => "",
-            'submit_text_label'         => "",
-            'suggested_comment_sort'    => '',
-            'title'                     => "", //REQUIRED
-            'type'                      => 'public',
-            'wiki_edit_age'             => 0,
-            'wiki_edit_karma'           => 100,
-            'wikimode'                  => 'disabled'
+            'comment_score_hide_mins' => 0,
+            'description' => "",
+            'exclude_banned_modqueue' => false,
+            'header-title' => "",
+            'hide_ads' => false,
+            'lang' => 'en',
+            'link_type' => 'any',
+            'over_18' => false,
+            'public_description' => "",
+            'public_traffic' => false,
+            'show_media' => false,
+            'spam_comments' => 'low',
+            'spam_links' => 'high',
+            'spam_selfposts' => 'high',
+            'submit_link_label' => "",
+            'submit_text' => "",
+            'submit_text_label' => "",
+            'suggested_comment_sort' => '',
+            'title' => "", //REQUIRED
+            'type' => 'public',
+            'wiki_edit_age' => 0,
+            'wiki_edit_karma' => 100,
+            'wikimode' => 'disabled'
         );
 
-        foreach ($settings as $key => $value)
-        {
+        foreach ($settings as $key => $value) {
             $params[$key] = $value;
         }
 
         $params['api_type'] = 'json';
         $params['name'] = $subreddit;
 
-        foreach ($params as $key => &$value)
-        {
-            if (is_bool($value))
-            {
+        foreach ($params as $key => &$value) {
+            if (is_bool($value)) {
                 $value = ($value) ? 'true' : 'false';
             }
         }
@@ -3056,17 +2969,15 @@ class phpRAW {
      */
     public function editSubreddit($subreddit, $settings, $i_read_the_documentation = false)
     {
-        if ($i_read_the_documentation !== true)
-        {
-            echo "Please read the PHPdoc documentation for Phapper::editSubreddit().\n";
+        if ($i_read_the_documentation !== true) {
+            echo "Please read the PHPdoc documentation for phpRAW::editSubreddit().\n";
 
             return null;
         }
 
         $subreddit_info = $this->aboutSubreddit($subreddit);
         $subreddit_settings = $this->getSubredditSettings($subreddit);
-        if (!isset($subreddit_info->data) || !isset($subreddit_settings->data))
-        {
+        if (!isset($subreddit_info->data) || !isset($subreddit_settings->data)) {
             return null;
         }
 
@@ -3077,18 +2988,15 @@ class phpRAW {
         $params['header-title'] = $subreddit_info->data->header_title;
         $params['allow_top'] = $subreddit_settings->data->default_set;
 
-        foreach ($settings as $key => $value)
-        {
+        foreach ($settings as $key => $value) {
             $params[$key] = $value;
         }
 
         $params['api_type'] = 'json';
         $params['sr'] = $subreddit_info->data->name;
 
-        foreach ($params as $key => &$value)
-        {
-            if (is_bool($value))
-            {
+        foreach ($params as $key => &$value) {
+            if (is_bool($value)) {
                 $value = ($value) ? 'true' : 'false';
             }
         }
@@ -3114,8 +3022,7 @@ class phpRAW {
             'name' => $user
         );
 
-        if (!empty($note))
-        {
+        if (!empty($note)) {
             $params['note'] = $note;
         }
 
@@ -3143,15 +3050,14 @@ class phpRAW {
      */
     public function unblockUser($user)
     {
-        if (!isset($this->user_id))
-        {
+        if (!isset($this->user_id)) {
             $this->getMe();
         }
 
         $params = array(
             'container' => $this->user_id,
-            'name'      => $user,
-            'type'      => 'enemy'
+            'name' => $user,
+            'type' => 'enemy'
         );
 
         return $this->apiCall("/api/unfriend", 'POST', $params);
@@ -3182,8 +3088,8 @@ class phpRAW {
     {
         $params = array(
             'start_date' => $start_date,
-            'end_date'   => $end_date,
-            'sort'       => $sort
+            'end_date' => $end_date,
+            'sort' => $sort
         );
 
         return $this->apiCall("/api/v1/me/notifications", 'GET', $params);
@@ -3242,19 +3148,18 @@ class phpRAW {
      */
     private function getUserListing($location, $user, $sort, $limit, $after, $before, $time = null, $show = null)
     {
-        if (empty($user))
-        {
+        if (empty($user)) {
             $user = $this->oauth2->username;
         }
 
         $params = array(
-            'show'     => $show,
-            'sort'     => $sort,
-            't'        => $time,
+            'show' => $show,
+            'sort' => $sort,
+            't' => $time,
             'username' => $user,
-            'after'    => $after,
-            'before'   => $before,
-            'limit'    => $limit,
+            'after' => $after,
+            'before' => $before,
+            'limit' => $limit,
         );
 
         return $this->apiCall("/user/$user/$location.json", 'GET', $params);
@@ -3397,8 +3302,8 @@ class phpRAW {
     public function wikiAllowEditor($subreddit, $username, $pagename)
     {
         $params = array(
-            'act'      => 'add',
-            'page'     => $pagename,
+            'act' => 'add',
+            'page' => $pagename,
             'username' => $username
         );
 
@@ -3415,7 +3320,7 @@ class phpRAW {
     public function wikiDisallowEditor($subreddit, $username, $pagename)
     {
         $params = array(
-            'page'     => $pagename,
+            'page' => $pagename,
             'username' => $username
         );
 
@@ -3443,7 +3348,7 @@ class phpRAW {
     public function wikiGetPage($subreddit, $pagename, $revision_id = null, $compare_with = null)
     {
         $params = array(
-            'v'  => $revision_id,
+            'v' => $revision_id,
             'v2' => $compare_with
         );
 
@@ -3461,10 +3366,10 @@ class phpRAW {
     public function wikiGetRevisions($subreddit, $limit = 25, $after = null, $before = null)
     {
         $params = array(
-            'after'  => $after,
+            'after' => $after,
             'before' => $before,
-            'limit'  => $limit,
-            'show'   => 'all'
+            'limit' => $limit,
+            'show' => 'all'
         );
 
         return $this->apiCall("/r/$subreddit/wiki/revisions", 'GET', $params);
@@ -3482,10 +3387,10 @@ class phpRAW {
     public function wikiGetPageRevisions($subreddit, $pagename, $limit = 25, $after = null, $before = null)
     {
         $params = array(
-            'after'  => $after,
+            'after' => $after,
             'before' => $before,
-            'limit'  => $limit,
-            'show'   => 'all'
+            'limit' => $limit,
+            'show' => 'all'
         );
 
         return $this->apiCall("/r/$subreddit/wiki/revisions/$pagename", 'GET', $params);
@@ -3502,20 +3407,18 @@ class phpRAW {
      */
     public function wikiEditPage($subreddit, $pagename, $content, $reason = null, $previous = null)
     {
-        if (empty($previous))
-        {
+        if (empty($previous)) {
             $current_revision = $this->wikiGetPageRevisions($subreddit, $pagename, 1);
-            if (isset($current_revision->data->children[0]))
-            {
+            if (isset($current_revision->data->children[0])) {
                 $previous = $current_revision->data->children[0]->id;
             }
         }
 
         $params = array(
-            'content'  => $content,
-            'page'     => $pagename,
+            'content' => $content,
+            'page' => $pagename,
             'previous' => $previous,
-            'reason'   => $reason
+            'reason' => $reason
         );
 
         return $this->apiCall("/r/$subreddit/api/wiki/edit", 'POST', $params);
@@ -3531,7 +3434,7 @@ class phpRAW {
     public function wikiToggleHideRevision($subreddit, $pagename, $revision_id)
     {
         $params = array(
-            'page'     => $pagename,
+            'page' => $pagename,
             'revision' => $revision_id
         );
 
@@ -3550,8 +3453,7 @@ class phpRAW {
     {
         $first_toggle = $this->wikiToggleHideRevision($subreddit, $pagename, $revision_id);
 
-        if ($first_toggle->status === false)
-        {
+        if ($first_toggle->status === false) {
             return $this->wikiToggleHideRevision($subreddit, $pagename, $revision_id);
         }
 
@@ -3570,8 +3472,7 @@ class phpRAW {
     {
         $first_toggle = $this->wikiToggleHideRevision($subreddit, $pagename, $revision_id);
 
-        if ($first_toggle->status === true)
-        {
+        if ($first_toggle->status === true) {
             return $this->wikiToggleHideRevision($subreddit, $pagename, $revision_id);
         }
 
@@ -3588,7 +3489,7 @@ class phpRAW {
     public function wikiRevertToRevision($subreddit, $pagename, $revision_id)
     {
         $params = array(
-            'page'     => $pagename,
+            'page' => $pagename,
             'revision' => $revision_id
         );
 
@@ -3607,10 +3508,10 @@ class phpRAW {
     public function wikiGetPageDiscussions($subreddit, $pagename, $limit = 25, $after = null, $before = null)
     {
         $params = array(
-            'after'  => $after,
+            'after' => $after,
             'before' => $before,
-            'limit'  => $limit,
-            'show'   => 'all'
+            'limit' => $limit,
+            'show' => 'all'
         );
 
         return $this->apiCall("/r/$subreddit/wiki/discussions/$pagename", 'GET', $params);
@@ -3637,28 +3538,23 @@ class phpRAW {
      */
     public function wikiUpdatePageSettings($subreddit, $pagename, $permlevel = null, $listed = null)
     {
-        if (is_null($permlevel) || is_null($listed))
-        {
+        if (is_null($permlevel) || is_null($listed)) {
             $current_settings = $this->wikiGetPageSettings($subreddit, $pagename);
-            if (isset($current_settings->data))
-            {
+            if (isset($current_settings->data)) {
                 $current_settings = get_object_vars($current_settings->data);
-                if (is_null($permlevel))
-                {
+                if (is_null($permlevel)) {
                     $permlevel = $current_settings['permlevel'];
                 }
-                if (is_null($listed))
-                {
+                if (is_null($listed)) {
                     $listed = $current_settings['listed'];
                 }
-            } else
-            {
+            } else {
                 return $current_settings;
             }
         }
 
         $params = array(
-            'listed'    => ($listed) ? 'true' : 'false',
+            'listed' => ($listed) ? 'true' : 'false',
             'permlevel' => strval($permlevel)
         );
 
@@ -3684,22 +3580,17 @@ class phpRAW {
         $options[CURLOPT_CUSTOMREQUEST] = $method;
         $options[CURLOPT_HTTPHEADER][] = "Authorization: " . $token['token_type'] . " " . $token['access_token'];
 
-        if ($json)
-        {
+        if ($json) {
             $options[CURLOPT_HTTPHEADER][] = "Content-Type: application/json";
         }
 
         //Execution is placed in a loop in case CAPTCHA is required.
-        do
-        {
+        do {
             //Prepare URL or POST parameters
-            if (isset($params))
-            {
-                if ($method == 'GET')
-                {
+            if (isset($params)) {
+                if ($method == 'GET') {
                     $url .= '?' . http_build_query($params);
-                } else
-                {
+                } else {
                     $options[CURLOPT_POSTFIELDS] = $params;
                 }
             }
@@ -3712,8 +3603,7 @@ class phpRAW {
             $this->ratelimiter->wait();
 
             //Print request URL for debug
-            if ($this->debug)
-            {
+            if ($this->debug) {
                 echo $url . "\n";
             }
 
@@ -3723,18 +3613,15 @@ class phpRAW {
 
             //Parse response
             $response = json_decode($response_raw);
-            if ($json_error = json_last_error())
-            {
+            if ($json_error = json_last_error()) {
                 $response = $response_raw;
             }
 
-            if (isset($response->json->captcha))
-            {
+            if (isset($response->json->captcha)) {
                 $params['iden'] = $response->json->captcha;
                 $params['captcha'] = $this->getCaptchaResponse($response->json->captcha);
                 $needs_captcha = ($params['captcha'] === 'skip') ? false : true;
-            } else
-            {
+            } else {
                 $needs_captcha = false;
             }
         } while ($needs_captcha);
