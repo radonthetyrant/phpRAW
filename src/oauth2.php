@@ -48,19 +48,25 @@ class OAuth2
             'password' => $this->password
         );
 
+        $options[CURLOPT_VERBOSE] = false;
+        $options[CURLOPT_SSL_VERIFYPEER] = false;
+        $options[CURLOPT_URL] = $url;
         $options[CURLOPT_USERAGENT] = $this->user_agent;
+        $options[CURLOPT_HTTPAUTH] = CURLAUTH_BASIC;
         $options[CURLOPT_USERPWD] = $this->app_id . ':' . $this->app_secret;
         $options[CURLOPT_RETURNTRANSFER] = true;
         $options[CURLOPT_CONNECTTIMEOUT] = 5;
         $options[CURLOPT_TIMEOUT] = 10;
-        $options[CURLOPT_CUSTOMREQUEST] = 'POST';
+        $options[CURLOPT_POST] = true;
         $options[CURLOPT_POSTFIELDS] = $params;
 
         $response = null;
         $got_token = false;
+
         while (!$got_token) {
-            $ch = curl_init($url);
+            $ch = curl_init();
             curl_setopt_array($ch, $options);
+
             $response_raw = curl_exec($ch);
             $response = json_decode($response_raw);
             curl_close($ch);
