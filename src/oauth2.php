@@ -63,7 +63,9 @@ class OAuth2
         $response = null;
         $got_token = false;
 
-        while (!$got_token) {
+        $tries = 5;
+
+        while (!$got_token && ($tries--) > 0) {
             $ch = curl_init();
             curl_setopt_array($ch, $options);
 
