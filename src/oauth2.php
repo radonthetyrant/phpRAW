@@ -16,13 +16,16 @@ class OAuth2
     private $app_secret;
     private $user_agent;
 
-    public function __construct($username, $password, $app_id, $app_secret, $user_agent)
+    private $scopes;
+
+    public function __construct($username, $password, $app_id, $app_secret, $user_agent, $scopes = array())
     {
         $this->username = $username;
         $this->password = $password;
         $this->app_id = $app_id;
         $this->app_secret = $app_secret;
         $this->user_agent = $user_agent;
+        $this->scopes = $scopes;
 
         $this->requestAccessToken();
     }
@@ -39,13 +42,19 @@ class OAuth2
         );
     }
 
+    public function getCurrentScope()
+    {
+        return $this->scope;
+    }
+
     private function requestAccessToken()
     {
         $url = "https://www.reddit.com/api/v1/access_token";
         $params = array(
             'grant_type' => 'password',
             'username' => $this->username,
-            'password' => $this->password
+            'password' => $this->password,
+            'scope' => implode(',',$this->scopes),
         );
 
         $options[CURLOPT_VERBOSE] = false;
@@ -63,9 +72,7 @@ class OAuth2
         $response = null;
         $got_token = false;
 
-        $tries = 5;
-
-        while (!$got_token && ($tries--) > 0) {
+        while (!$got_token) {
             $ch = curl_init();
             curl_setopt_array($ch, $options);
 
@@ -94,6 +101,7 @@ class OAuth2
         $this->expiration = time() + $response->expires_in;
         $this->scope = $response->scope;
     }
+
 }
 
 class RedditAuthenticationException extends \Exception

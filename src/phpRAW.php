@@ -16,7 +16,7 @@ class phpRAW
     private $endpoint;
     private $debug;
 
-    public function __construct($username = null, $password = null, $app_id = null, $app_secret = null, $user_agent = null, $basic_endpoint = null, $oauth_endpoint = null, $debug = false)
+    public function __construct($username = null, $password = null, $app_id = null, $app_secret = null, $user_agent = null, $basic_endpoint = null, $oauth_endpoint = null, $scope = null, $debug = false)
     {
         if (file_exists(__DIR__ . '/../config.php')) {
             include_once(__DIR__ . '/../config.php');
@@ -30,7 +30,7 @@ class phpRAW
         $reddit_basic_endpoint  = defined("PHPRAW_OAUTH_ENDPOINT") ? PHPRAW_OAUTH_ENDPOINT : $basic_endpoint;
         $reddit_oauth_endpoint  = defined("PHPRAW_BASIC_ENDPOINT") ? PHPRAW_BASIC_ENDPOINT : $oauth_endpoint;
 
-        $this->oauth2 = new OAuth2($reddit_username, $reddit_password, $reddit_app_id, $reddit_app_secret, $phpRAW_user_agent);
+        $this->oauth2 = new OAuth2($reddit_username, $reddit_password, $reddit_app_id, $reddit_app_secret, $phpRAW_user_agent, is_array($scope) ? $scope : array());
         $this->ratelimiter = new RateLimiter(true, 1);
         $this->user_agent = $phpRAW_user_agent;
         $this->basic_endpoint = $reddit_basic_endpoint;
@@ -47,7 +47,6 @@ class phpRAW
     {
         $this->debug = $debug;
     }
-
 
     //-----------------------------------------
     // Account (DONE)
@@ -2683,6 +2682,18 @@ class phpRAW
         return $this->apiCall("/r/$subreddit/wiki/config/sidebar.json");
     }
 
+    public function editSubredditSidebar($subreddit, $newSidebar)
+    {
+        $params = array(
+            "content" => $newSidebar,
+            "page" => "config/sidebar",
+            "reason" => "phpRAW Scripted sidebar update",
+        );
+        $result = $this->apiCall("/r/$subreddit/api/wiki/edit", 'POST', $params);
+
+        return $result;
+    }
+
     /**
      * Retrieve a subreddit's stickied posts.
      * @param string $subreddit Subreddit from which to retrieve sticky posts.
@@ -2982,6 +2993,7 @@ class phpRAW
         $subreddit_info = $this->aboutSubreddit($subreddit);
         $subreddit_settings = $this->getSubredditSettings($subreddit);
         if (!isset($subreddit_info->data) || !isset($subreddit_settings->data)) {
+            trigger_error("Could not retrieve subreddit settings or subreddit data before edit subreddit!");
             return null;
         }
 
@@ -3005,10 +3017,11 @@ class phpRAW
             }
         }
 
-        var_dump($subreddit_info);
-        var_dump($subreddit_settings);
+        //var_dump($subreddit_info);
+        //var_dump($subreddit_settings);
+        $result = $this->apiCall("/api/site_admin", 'POST', $params);
 
-        return $this->apiCall("/api/site_admin", 'POST', $params);
+        return $result;
     }
 
     //-----------------------------------------
@@ -3568,7 +3581,7 @@ class phpRAW
     //-----------------------------------------
     // API
     //-----------------------------------------
-    public function apiCall($path, $method = 'GET', $params = null, $json = false)
+    public function apiCall($path, $method = 'GET', $params = null, $json = false, $modhash = null)
     {
         //Prepare request URL
         $url = $this->oauth_endpoint . $path;
@@ -3576,17 +3589,23 @@ class phpRAW
         //Obtain access token for authentication
         $token = $this->oauth2->getAccessToken();
 
+        $header = array(
+            "Authorization: " . $token['token_type'] . " " . $token['access_token']
+        );
+        if (isset($modhash))
+            $header[] = "X-Modhash: $modhash";
+        if ($json)
+            $header[] = "Content-Type: application/json";
+
         //Prepare cURL options
         $options[CURLOPT_RETURNTRANSFER] = true;
         $options[CURLOPT_CONNECTTIMEOUT] = 5;
         $options[CURLOPT_TIMEOUT] = 10;
         $options[CURLOPT_USERAGENT] = $this->user_agent;
         $options[CURLOPT_CUSTOMREQUEST] = $method;
-        $options[CURLOPT_HTTPHEADER][] = "Authorization: " . $token['token_type'] . " " . $token['access_token'];
-
-        if ($json) {
-            $options[CURLOPT_HTTPHEADER][] = "Content-Type: application/json";
-        }
+        $options[CURLOPT_HTTPHEADER] = $header;
+        $options[CURLOPT_SSL_VERIFYPEER] = false;
+        //$options[CURLOPT_VERBOSE] = $this->debug;
 
         //Execution is placed in a loop in case CAPTCHA is required.
         do {
