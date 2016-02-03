@@ -2,7 +2,6 @@
 
 namespace phpRAW;
 
-require_once(__DIR__ . '/../config.php');
 require_once('oauth2.php');
 require_once('ratelimiter.php');
 require_once('live.php');
@@ -17,21 +16,26 @@ class phpRAW
     private $endpoint;
     private $debug;
 
-    public function __construct($username = null, $password = null, $app_id = null, $app_secret = null, $user_agent = null, $basic_endpoint = null, $oauth_endpoint = null)
+    public function __construct($username = null, $password = null, $app_id = null, $app_secret = null, $user_agent = null, $basic_endpoint = null, $oauth_endpoint = null, $debug = false)
     {
-        $reddit_username = (is_null($username)) ? phpRAWConfig::$username : $username;
-        $reddit_password = (is_null($password)) ? phpRAWConfig::$password : $password;
-        $reddit_app_id = (is_null($app_id)) ? phpRAWConfig::$app_id : $app_id;
-        $reddit_app_secret = (is_null($app_secret)) ? phpRAWConfig::$app_secret : $app_secret;
-        $phpRAW_user_agent = (is_null($user_agent)) ? phpRAWConfig::$user_agent : $user_agent;
-        $reddit_basic_endpoint = (is_null($basic_endpoint)) ? phpRAWConfig::$basic_endpoint : $basic_endpoint;
-        $reddit_oauth_endpoint = (is_null($oauth_endpoint)) ? phpRAWConfig::$oauth_endpoint : $oauth_endpoint;
+        if (file_exists(__DIR__ . '/../config.php')) {
+            include_once(__DIR__ . '/../config.php');
+        }
+
+        $reddit_username        = defined("REDDIT_USERNAME") ? REDDIT_USERNAME : $username;
+        $reddit_password        = defined("REDDIT_PASSWORD") ? REDDIT_PASSWORD : $password;
+        $reddit_app_id          = defined("REDDIT_APP_ID") ? REDDIT_APP_ID : $app_id;
+        $reddit_app_secret      = defined("REDDIT_APP_SECRET") ? REDDIT_APP_SECRET : $app_secret;
+        $phpRAW_user_agent      = defined("PHPRAW_USER_AGENT") ? PHPRAW_USER_AGENT : $user_agent;
+        $reddit_basic_endpoint  = defined("PHPRAW_OAUTH_ENDPOINT") ? PHPRAW_OAUTH_ENDPOINT : $basic_endpoint;
+        $reddit_oauth_endpoint  = defined("PHPRAW_BASIC_ENDPOINT") ? PHPRAW_BASIC_ENDPOINT : $oauth_endpoint;
+
         $this->oauth2 = new OAuth2($reddit_username, $reddit_password, $reddit_app_id, $reddit_app_secret, $phpRAW_user_agent);
         $this->ratelimiter = new RateLimiter(true, 1);
         $this->user_agent = $phpRAW_user_agent;
         $this->basic_endpoint = $reddit_basic_endpoint;
         $this->oauth_endpoint = $reddit_oauth_endpoint;
-        $this->debug = false;
+        $this->debug = $debug;
     }
 
     /**

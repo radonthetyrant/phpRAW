@@ -1,17 +1,25 @@
 {
-  "name": "kevin/phpRAW",
+  "name": "radonthetyrant/phpRAW",
   "description": "A PHP Reddit API Wrapper",
   "license": "MIT",
   "authors": [
     {
       "name": "kevineger",
       "email": "egerkevinjames@gmail.com"
+    },
+    {
+      "name": "radonthetyrant",
+      "email": "radon@rn86.de"
+    },
+    {
+      "name": "rotorcowboy",
+      "email": "rotorcowboy@unknown"
     }
   ],
   "repositories": [
     {
-      "type": "vcs",
-      "url": "https://github.com/kevineger/phpRAW"
+      "type": "git",
+      "url": "https://github.com/radonthetyrant/phpRAW.git"
     }
   ],
   "minimum-stability": "dev",
