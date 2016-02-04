@@ -17,8 +17,9 @@ class OAuth2
     private $user_agent;
 
     private $scopes;
+    private $verboseCurl;
 
-    public function __construct($username, $password, $app_id, $app_secret, $user_agent, $scopes = array())
+    public function __construct($username, $password, $app_id, $app_secret, $user_agent, $scopes = array(), $verboseCurl = false)
     {
         $this->username = $username;
         $this->password = $password;
@@ -26,6 +27,7 @@ class OAuth2
         $this->app_secret = $app_secret;
         $this->user_agent = $user_agent;
         $this->scopes = $scopes;
+        $this->verboseCurl = $verboseCurl;
 
         $this->requestAccessToken();
     }
@@ -57,7 +59,7 @@ class OAuth2
             'scope' => implode(',',$this->scopes),
         );
 
-        $options[CURLOPT_VERBOSE] = false;
+        $options[CURLOPT_VERBOSE] = $this->verboseCurl;
         $options[CURLOPT_SSL_VERIFYPEER] = false;
         $options[CURLOPT_URL] = $url;
         $options[CURLOPT_USERAGENT] = $this->user_agent;

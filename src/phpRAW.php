@@ -15,12 +15,15 @@ class phpRAW
     private $user_agent;
     private $endpoint;
     private $debug;
+    private $verboseCurl;
 
-    public function __construct($username = null, $password = null, $app_id = null, $app_secret = null, $user_agent = null, $basic_endpoint = null, $oauth_endpoint = null, $scope = null, $debug = false)
+    public function __construct($username = null, $password = null, $app_id = null, $app_secret = null, $user_agent = null, $basic_endpoint = null, $oauth_endpoint = null, $scope = null, $debug = false, $verboseCurl = false)
     {
         if (file_exists(__DIR__ . '/../config.php')) {
             include_once(__DIR__ . '/../config.php');
         }
+
+        $this->verboseCurl = $verboseCurl;
 
         $reddit_username        = defined("REDDIT_USERNAME") ? REDDIT_USERNAME : $username;
         $reddit_password        = defined("REDDIT_PASSWORD") ? REDDIT_PASSWORD : $password;
@@ -30,7 +33,7 @@ class phpRAW
         $reddit_basic_endpoint  = defined("PHPRAW_OAUTH_ENDPOINT") ? PHPRAW_OAUTH_ENDPOINT : $basic_endpoint;
         $reddit_oauth_endpoint  = defined("PHPRAW_BASIC_ENDPOINT") ? PHPRAW_BASIC_ENDPOINT : $oauth_endpoint;
 
-        $this->oauth2 = new OAuth2($reddit_username, $reddit_password, $reddit_app_id, $reddit_app_secret, $phpRAW_user_agent, is_array($scope) ? $scope : array());
+        $this->oauth2 = new OAuth2($reddit_username, $reddit_password, $reddit_app_id, $reddit_app_secret, $phpRAW_user_agent, is_array($scope) ? $scope : array(), $verboseCurl);
         $this->ratelimiter = new RateLimiter(true, 1);
         $this->user_agent = $phpRAW_user_agent;
         $this->basic_endpoint = $reddit_basic_endpoint;
@@ -3605,7 +3608,7 @@ class phpRAW
         $options[CURLOPT_CUSTOMREQUEST] = $method;
         $options[CURLOPT_HTTPHEADER] = $header;
         $options[CURLOPT_SSL_VERIFYPEER] = false;
-        //$options[CURLOPT_VERBOSE] = $this->debug;
+        $options[CURLOPT_VERBOSE] = $this->verboseCurl;
 
         //Execution is placed in a loop in case CAPTCHA is required.
         do {
