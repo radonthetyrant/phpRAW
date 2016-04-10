@@ -92,7 +92,8 @@ class OAuth2
                         throw new RedditAuthenticationException("Supplied reddit app ID/secret are invalid.", 2);
                     }
                 } else {
-                    fwrite(STDERR, "WARNING: Request for reddit access token has failed. Check your connection.\n");
+                    if ($this->verboseCurl)
+                        fwrite(STDERR, "WARNING: Request for reddit access token has failed. Check your connection.\n");
                     sleep(5);
                 }
             }
