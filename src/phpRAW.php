@@ -503,7 +503,7 @@ class phpRAW
      * @param bool $distinguish Whether or not it should be mod distinguished (for modded subreddits only).
      * @return object Response to API call.
      */
-    public function comment($parent, $text, $distinguish = false)
+    public function comment($parent, $text, $distinguish = false, $sticky = false)
     {
         $params = array(
             'api_type' => 'json',
@@ -513,8 +513,8 @@ class phpRAW
 
         $response = $this->apiCall("/api/comment", 'POST', $params);
 
-        if ($distinguish && isset($response->json->data->things[0]->data->name)) {
-            $dist_response = $this->distinguish($response->json->data->things[0]->data->name, true);
+        if (($distinguish || $sticky) && isset($response->json->data->things[0]->data->name)) {
+            $dist_response = $this->distinguish($response->json->data->things[0]->data->name, $distinguish, $sticky);
             if (isset($dist_response->json->errors) && count($dist_response->json->errors) == 0) {
                 $response = $dist_response;
             }
@@ -1364,12 +1364,13 @@ class phpRAW
      * @param bool $how True to set [M] distinguish. False to undistinguish.
      * @return object Response to API call.
      */
-    public function distinguish($thing_id, $how = true)
+    public function distinguish($thing_id, $how = true, $sticky = false)
     {
         $params = array(
             'api_type' => 'json',
             'how' => ($how) ? 'yes' : 'no',
-            'id' => $thing_id
+            'sticky' => (bool)$sticky,
+            'id' => $thing_id,
         );
 
         return $this->apiCall("/api/distinguish", 'POST', $params);
