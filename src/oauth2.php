@@ -28,7 +28,6 @@ class OAuth2
         $this->user_agent = $user_agent;
         $this->scopes = $scopes;
         $this->verboseCurl = $verboseCurl;
-
         $this->requestAccessToken();
     }
 
@@ -81,7 +80,6 @@ class OAuth2
             $response_raw = curl_exec($ch);
             $response = json_decode($response_raw);
             curl_close($ch);
-
             if (isset($response->access_token)) {
                 $got_token = true;
             } else {
@@ -90,6 +88,8 @@ class OAuth2
                         throw new RedditAuthenticationException("Supplied reddit username/password are invalid or the threshold for invalid logins has been exceeded.", 1);
                     } elseif ($response->error === 401) {
                         throw new RedditAuthenticationException("Supplied reddit app ID/secret are invalid.", 2);
+                    } else {
+						throw new RedditAuthenticationException($response->error_description, 3);
                     }
                 } else {
                     if ($this->verboseCurl)
